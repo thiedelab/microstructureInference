@@ -8,10 +8,11 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 
 ## License Notice
 - Licensed under the GNU General Public License v3.0
+- Modified version of py4DSTEM codes are in third_party directory
 - The original py4DSTEM project is available at: https://github.com/py4dstem/py4DSTEM
 
 
-## Crystal Structures Used
+### Crystal Structures Used
 The unit cell cif files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/) database:
 
 | ICSD collection code | Chemical formula | crystal space group | crystal space group IT number | variable string used in codes |
