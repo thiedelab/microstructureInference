@@ -24,13 +24,17 @@ materials project (https://next-gen.materialsproject.org/).
 
 
 ## How to generate synthetic data
-#### To generate synethetic training data, one should first sample thickness and orientations from given crystal unit cell.
+###### To generate synethetic training data, one should first sample thickness and orientations from given crystal unit cell.
 
 ```bash
 ./scripts/data_gen_01_synthetic_training_data/step_01_sample_orientations_and_thickness/sample_orientation_and_thickness.sh
+```
 
+###### From the sampled orientations and thickness, one can simulate dynamic diffraction patterns
 
-
+```bash
+./scripts/data_gen_01_synthetic_training_data/step_02_simulate_dynamic_diffraction_patterns/simulate_dynamic_diffraction.sh
+```
 
 ## Acknowledgments
 This project is supported by the Eric and Wendy Schmidt AI in Science Postdoctoral Fellowship, a program of Schmidt Sciences, LLC

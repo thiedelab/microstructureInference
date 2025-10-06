@@ -9,7 +9,7 @@ conda activate py4DSTEM14.08-envforPlot
 
 echo "starting at `date` on `hostname`"
 echo ""
-echo "GENERATION JOB START"
+echo "SAMPING ORIENTATIONS and THICKNESS JOB (START)"
 
 echo ""
 echo "sampling orientations and thickness for copper (Cu) face-centered-cubic crystal"
@@ -24,4 +24,4 @@ echo "sampling orientations and thickness for copper 1 oxide (Cu2O) cubic crysta
 python generate_orientation_thicnkess_mirrorOp.py --crystal CuO_monoclinic --outOfPlaneAngleDisp 15.5
 
 echo ""
-echo "GENERATION JOB DONE"
+echo "SAMPING ORIENTATIONS and THICKNESS JOB (END)"
