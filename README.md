@@ -26,9 +26,9 @@ If you don't have access to the ICSD, you can get unit cell information and cif 
 materials project (https://next-gen.materialsproject.org/).
 
 
-## Descriptions for training neural networks models
+### Descriptions for training neural networks models
 
-## Descriptions of scripts for data generation and data analysis
+### Descriptions of scripts for data generation and data analysis
 
 #### How to generate synthetic training data for training neural network models
 
