@@ -14,14 +14,16 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 ## Crystal Structures Used
 The unit cell CIF files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/) database:
 
-- ICSD #136042: Cu   (cubic)       'F m -3 m'     crystal name used in codes 'Cu_fcc'
-- ICSD #63281:  Cu2O (cubic)       'P n -3 m Z'   crystal name used in codes 'Cu_cubic'
-- ICSD #67850:  CuO  (monoclinic)  'C 1 2/c 1'    crystal name used in codes 'CuO_monoclinic'
+- ICSD #136042: Cu   (cubic)-------'F m -3 m'-----crystal name used in codes 'Cu_fcc'
+- ICSD #63281:  Cu2O (cubic)-------'P n -3 m Z'---crystal name used in codes 'Cu_cubic'
+- ICSD #67850:  CuO  (monoclinic)--'C 1 2/c 1'----crystal name used in codes 'CuO_monoclinic'
 
 Due to licensing restrictions, CIF files are not included. Users with access to the ICSD can retrieve the data via these entry numbers.
 If you don't have access to the ICSD, you can get unit cell information and cif files from other open-source projects including
 materials project (https://next-gen.materialsproject.org/).
 
+
+## Description of scripts for data generation and data analysis
 
 #### How to generate synthetic training data
 ###### step 01. To generate synethetic training data, we first sample thickness and orientations from given crystal unit cell.
