@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+   { name = "Kwanghwi Je, Erik Thiede", email = "kj355@cornell.edu"},
+]
+name = "orientationMapping"
+version = "0.0.1"
+dependencies = [
+		"numpy",
+		]
+
