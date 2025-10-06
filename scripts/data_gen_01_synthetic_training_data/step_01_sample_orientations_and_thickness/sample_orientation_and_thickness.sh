@@ -1,0 +1,27 @@
+#!/bin/bash
+
+## Source /path/to/your/conda/installation/etc/profile.d/conda.sh
+source /home/kwang/anaconda3/etc/profile.d/conda.sh
+
+## Activate your desired Conda environment
+conda activate py4DSTEM14.08-envforPlot
+
+
+echo "starting at `date` on `hostname`"
+echo ""
+echo "GENERATION JOB START"
+
+echo ""
+echo "sampling orientations and thickness for copper (Cu) face-centered-cubic crystal"
+python generate_orientation_thicnkess_mirrorOp.py --crystal Cu_fcc --outOfPlaneAngleDisp 15.0
+
+echo ""
+echo "sampling orientations and thickness for copper 1 oxide (Cu2O) cubic crystal"
+python generate_orientation_thicnkess_mirrorOp.py --crystal Cu2O_cubic --outOfPlaneAngleDisp 15.0
+
+echo ""
+echo "sampling orientations and thickness for copper 1 oxide (Cu2O) cubic crystal"
+python generate_orientation_thicnkess_mirrorOp.py --crystal CuO_monoclinic --outOfPlaneAngleDisp 15.5
+
+echo ""
+echo "GENERATION JOB DONE"
