@@ -26,7 +26,9 @@ If you don't have access to the ICSD, you can get unit cell information and cif 
 materials project (https://next-gen.materialsproject.org/).
 
 
-## Description of scripts for data generation and data analysis
+## Descriptions for training neural networks models
+
+## Descriptions of scripts for data generation and data analysis
 
 #### How to generate synthetic training data for training neural network models
 
@@ -56,17 +58,10 @@ materials project (https://next-gen.materialsproject.org/).
 ```
 
 
-#### How to train neural networks models
-
-
-
 #### How to generate synthetic 4D-STEM data
 
 
-
 #### How to extract Bragg Disks from experimental 4D-STEM data
-
-
 
 #### How to map experimental diffraction patterns to corresponding orientations
 
