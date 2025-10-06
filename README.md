@@ -14,6 +14,12 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 ## Crystal Structures Used
 The unit cell CIF files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/) database:
 
+| ICSD collection code | Chemical formula | crystal space group | crystal space group IT number | variable name used in codes |
+|:---------------------|:----------------:|:-------------------:|:-----------------------------:|----------------------------:|
+| ICSD #136042         |    Cu            |     F m -3 m        |            225                |          'Cu_fcc'           |
+| ICSD #63281          | Cu<sub>2</sub>O  |     P n -3 m Z      |            224                |          'Cu2O_cubic'       |
+| ICSD #67850          |   CuO            |     c 1 2/c 1       |            15                 |          'CuO_monoclinic'   |
+
 - ICSD #136042: Cu   (cubic)-------'F m -3 m'-----crystal name used in codes 'Cu_fcc'
 - ICSD #63281:  Cu2O (cubic)-------'P n -3 m Z'---crystal name used in codes 'Cu_cubic'
 - ICSD #67850:  CuO  (monoclinic)--'C 1 2/c 1'----crystal name used in codes 'CuO_monoclinic'
