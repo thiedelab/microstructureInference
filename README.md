@@ -15,14 +15,11 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 The unit cell CIF files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/) database:
 
 | ICSD collection code | Chemical formula | crystal space group | crystal space group IT number | variable name used in codes |
-|:---------------------|:----------------:|:-------------------:|:-----------------------------:|----------------------------:|
+|:--------------------:|:----------------:|:-------------------:|:-----------------------------:|:---------------------------:|
 | ICSD #136042         |    Cu            |     F m -3 m        |            225                |          'Cu_fcc'           |
 | ICSD #63281          | Cu<sub>2</sub>O  |     P n -3 m Z      |            224                |          'Cu2O_cubic'       |
 | ICSD #67850          |   CuO            |     c 1 2/c 1       |            15                 |          'CuO_monoclinic'   |
 
-- ICSD #136042: Cu   (cubic)-------'F m -3 m'-----crystal name used in codes 'Cu_fcc'
-- ICSD #63281:  Cu2O (cubic)-------'P n -3 m Z'---crystal name used in codes 'Cu_cubic'
-- ICSD #67850:  CuO  (monoclinic)--'C 1 2/c 1'----crystal name used in codes 'CuO_monoclinic'
 
 Due to licensing restrictions, CIF files are not included. Users with access to the ICSD can retrieve the data via these entry numbers.
 If you don't have access to the ICSD, you can get unit cell information and cif files from other open-source projects including
@@ -49,13 +46,13 @@ For each diffraction pattern, Bragg disk positions (in polar coordinates) and in
 ###### step 03. For each diffraction pattern, we further digitize Bragg disk positions and intensities (still in table format)
 
 ```bash
-./scripts/data_gen_01_synthetic_training_data/step_02_simulate_dynamic_diffraction_patterns/simulate_dynamic_diffraction.sh
+./scripts/data_gen_01_synthetic_training_data/step_03_digitize_bins_for_Bragg_disk_positions_and_intensities/digitize_dynamic_diffraction.sh
 ```
 
 ###### step 04. Finally, we merge all data and split it into training data and validation data
 
 ```bash
-./scripts/data_gen_01_synthetic_training_data/step_02_simulate_dynamic_diffraction_patterns/simulate_dynamic_diffraction.sh
+./scripts/data_gen_01_synthetic_training_data/step_04_merge_all_data_and_split_into_training_and_validation/merge_and_split.sh
 ```
 
 
