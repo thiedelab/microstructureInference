@@ -13,15 +13,15 @@ echo "SAMPING ORIENTATIONS and THICKNESS JOB (START)"
 
 echo ""
 echo "sampling orientations and thickness for copper (Cu) face-centered-cubic crystal"
-python generate_orientation_thicnkess_mirrorOp.py --crystal Cu_fcc --outOfPlaneAngleDisp 2.0
+python step_01_sample_orientation_thicnkess_mirrorOp.py --crystal Cu_fcc --outOfPlaneAngleDisp 2.0
 
 echo ""
 echo "sampling orientations and thickness for copper 1 oxide (Cu2O) cubic crystal"
-python generate_orientation_thicnkess_mirrorOp.py --crystal Cu2O_cubic --outOfPlaneAngleDisp 2.0
+python step_01_sample_orientation_thicnkess_mirrorOp.py --crystal Cu2O_cubic --outOfPlaneAngleDisp 2.0
 
 echo ""
 echo "sampling orientations and thickness for copper 1 oxide (Cu2O) cubic crystal"
-python generate_orientation_thicnkess_mirrorOp.py --crystal CuO_monoclinic --outOfPlaneAngleDisp 4.5
+python step_01_sample_orientation_thicnkess_mirrorOp.py --crystal CuO_monoclinic --outOfPlaneAngleDisp 4.5
 
 echo ""
 echo "SAMPING ORIENTATIONS and THICKNESS JOB (END)"

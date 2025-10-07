@@ -38,7 +38,7 @@ args = parser.parse_args()
 file_index = int(args.index)
 file_index_string = str(file_index)
 
-file_name = "py4DSTEM_Cu_ori_table_normalize_by_maxInt_5e3_sg0.04_merged_" + file_index_string
+file_name = "py4DSTEM_Cu_ori_table_normalize_by_maxInt_5e3_sg0.045_merged_" + file_index_string
 
 
 BD_input = np.load(file_path + file_name + '.npy')

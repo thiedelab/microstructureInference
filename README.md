@@ -34,30 +34,12 @@ materials project (https://next-gen.materialsproject.org/).
 #### How to generate synthetic training data for training neural network models
 
 ###### step 01. We first sample thickness and orientations from given crystal unit cell.
-
-```bash
-./scripts/data_generate_01_synthetic_training_data/step_01_sample_orientations_and_thickness/sample_orientation_and_thickness.sh
-```
-
 ###### step 02. From the sampled orientations and thickness, we simulate dynamic diffraction patterns and save them in table format.
-
-```bash
-./scripts/data_generate_01_synthetic_training_data/step_02_simulate_dynamic_diffraction_patterns/simulate_dynamic_diffraction.sh
-```
-
-
 ###### step 03. For each diffraction pattern, we further digitize Bragg disk positions and intensities (still in table format)
-
-```bash
-./scripts/data_generate_01_synthetic_training_data/step_03_digitize_bins_for_Bragg_disk_positions_and_intensities/digitize_dynamic_diffraction.sh
-```
-
 ###### step 04. Finally, we merge all data and split it into training data and validation data
-
 ```bash
-./scripts/data_generate_01_synthetic_training_data/step_04_merge_all_data_and_split_into_training_and_validation/merge_and_split.sh
+./scripts/data_generate_01_synthetic_training_data/DATA_GENERATE_01_generate_synthetic_training_data.sh
 ```
-
 
 #### How to generate synthetic 4D-STEM data
 

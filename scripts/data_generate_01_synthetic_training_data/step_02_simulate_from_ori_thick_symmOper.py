@@ -72,7 +72,7 @@ file_path = "/projects/bdts/jekw/projects/py4DSTEM_table/"
 Cu_cif_path = "/projects/bdts/jekw/projects/py4DSTEM_table/"
 # rotation_matrices = np.load(rot_matrices_path + "rotation_matrices_merged.npy")
 
-with open(file_path + 'orientations_thickness_and_isMirrorSymmetry_for_data_generation_Cu_fcc_excitErr0.045_relIntThresh0.005.pkl', 'rb') as f:
+with open(file_path + 'Cu_fcc_orientations_thickness_and_isMirrorSymmetry_for_data_generation_excitErr0.045_relIntThresh0.005.pkl', 'rb') as f:
     deploy_orientations_thickness_and_isMirrorSymmetry_for_data_generation = pickle.load(f)
 
 zone_axes = np.load(file_path + "Cu_fcc_zone_axes_out_of_plane_displacement_2.0_degree.npy")
@@ -225,7 +225,7 @@ output_label_orignial = np.array(output_label_orignial)
 output_mirror = np.array(output_mirror)
 thickness_save = np.array(thickness_save)
 
-filename = "py4DSTEM_Cu_ori_table_normalize_by_maxInt_5e3_sg0.04_merged_%d"%(save_string)
+filename = "py4DSTEM_Cu_ori_table_normalize_by_maxInt_5e3_sg0.045_merged_%d"%(save_string)
 
 
 

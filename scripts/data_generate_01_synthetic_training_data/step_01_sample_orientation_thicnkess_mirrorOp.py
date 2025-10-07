@@ -8,13 +8,13 @@ Created on Tue Sep 23 13:40:45 2025
 import py4DSTEM
 import numpy as np
 import pickle
-from modules_select_orientation_thicnkess_mirrorOp import action_01_collect_unique_thickness_for_each_zone_axis
-from modules_select_orientation_thicnkess_mirrorOp import action_02_compare_DPs_from_different_zone_axes
-from modules_select_orientation_thicnkess_mirrorOp import action_03_remove_thickness_indices_of_common_patterns_for_lowSymmetry_zone_axes
-from modules_select_orientation_thicnkess_mirrorOp import action_04_finalize_unique_thickness_resulting_unique_pattern_for_each_ZA
-from modules_select_orientation_thicnkess_mirrorOp import action_05_sample_representative_thickness_for_each_ZA
-from modules_select_orientation_thicnkess_mirrorOp import action_06_check_symmetry_for_each_ZA_each_thickness, action_06_check_symmetry_for_each_ZA_each_thickness_monoclinic
-from modules_select_orientation_thicnkess_mirrorOp import action_07_generate_dictionary_of_orientation_thickness_and_mirrorSymmOper
+from modules_step_01_sample_orientation_thickness import action_01_collect_unique_thickness_for_each_zone_axis
+from modules_step_01_sample_orientation_thickness import action_02_compare_DPs_from_different_zone_axes
+from modules_step_01_sample_orientation_thickness import action_03_remove_thickness_indices_of_common_patterns_for_lowSymmetry_zone_axes
+from modules_step_01_sample_orientation_thickness import action_04_finalize_unique_thickness_resulting_unique_pattern_for_each_ZA
+from modules_step_01_sample_orientation_thickness import action_05_sample_representative_thickness_for_each_ZA
+from modules_step_01_sample_orientation_thickness import action_06_check_symmetry_for_each_ZA_each_thickness, action_06_check_symmetry_for_each_ZA_each_thickness_monoclinic
+from modules_step_01_sample_orientation_thickness import action_07_generate_dictionary_of_orientation_thickness_and_mirrorSymmOper
 import time
 import argparse
 
@@ -27,6 +27,8 @@ def parse_args():
     parser.add_argument("--outOfPlaneAngleDisp", type=float, help="out of plane angle displacement used in py4DSTEM orientation plan", default = float(2))
     parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.045))
     parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(5e-3))
+    parser.add_argument("--saveIntermediatePklFiles", type=int, help="whether to save intermediate pikcle files; can be helpful for debug.", default = 0)
+    
     return parser.parse_args()
 
 def main():
@@ -38,6 +40,7 @@ def main():
     excitation_error = float(args.excitError)
     intensThreshold = float(args.intensThreshold)
     outOfPlaneAngleDisp = args.outOfPlaneAngleDisp
+    saveIntermediatePklFiles = args.saveIntermediatePklFiles
     
     
     if crystal_name not in ("Cu_fcc", "Cu2O_cubic", "CuO_monoclinic"):
@@ -149,14 +152,7 @@ def main():
                                                                             
     )
     
-    with open('total_unique_thicknesses_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(total_unique_thicknesses, f)
-    
-    with open('total_diffraction_patterns_uniques_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(total_diffraction_patterns_uniques, f)
-    
-    with open('total_average_intensities_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(total_average_intensities, f)
+   
     
     print("")
     print("Action 1. for each zone axis collect thickness resulting unique diffraction patterns (END)\n\n")
@@ -183,10 +179,7 @@ def main():
                                                                                 decimals_for_setting_tuple = 6,
     )
     
-    with open('common_indices_for_each_ZA_pairs_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(common_indices_for_each_ZA_pairs, f)
-    with open('unique_indices_candiate_for_each_ZA_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(unique_indices_candiate_for_each_ZA, f)
+    
     
     print("")
     print("Action 2. for each zone axis, collect thickness indices resulting overlapping and unique diffraction patterns (END)\n\n")
@@ -211,8 +204,7 @@ def main():
         common_indices_for_each_ZA_pairs,
     )
     
-    with open('indices_selectively_assigned_to_each_ZA_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(indices_selectively_assigned_to_each_ZA, f)
+    
             
     print("")
     print("Action 3. for each zone axis, remove thickness indices resulting overlapping diffraction patterns (END)\n\n")
@@ -237,8 +229,6 @@ def main():
             indices_selectively_assigned_to_each_ZA,
             )
     
-    with open('ZA_idx_unique_thickness_indices_final_save_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(ZA_idx_unique_thickness_indices_final_save, f)
     
     print("")
     print("Action 4. for each zone axis, assign thickness indices that may be used for simulations (END)\n\n")
@@ -267,8 +257,6 @@ def main():
     
     
                 
-    with open('final_sampled_thickness_for_each_zone_axis_summary_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(final_sampled_thickness_for_each_zone_axis_summary, f)
     
     print("")
     print("Action 5. for each zone axis, sample thickness that may be used for simulations (END)\n\n")
@@ -310,8 +298,7 @@ def main():
         )
     
     
-    with open('per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
-        pickle.dump(per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation, f)    
+    
     
     
     print("")
@@ -336,8 +323,39 @@ def main():
         per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation,
     )
     
-                    
-    with open('orientations_thickness_and_isMirrorSymmetry_for_data_generation_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+    if saveIntermediatePklFiles:
+    
+        with open(crystal_name + '_total_unique_thicknesses' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(total_unique_thicknesses, f)
+        
+        with open(crystal_name + '_total_diffraction_patterns_uniques' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(total_diffraction_patterns_uniques, f)
+        
+        with open(crystal_name + '_total_average_intensities' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(total_average_intensities, f)
+        
+        with open(crystal_name + '_common_indices_for_each_ZA_pairs' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(common_indices_for_each_ZA_pairs, f)
+            
+        with open(crystal_name + '_unique_indices_candiate_for_each_ZA' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(unique_indices_candiate_for_each_ZA, f)
+        
+        with open(crystal_name + '_indices_selectively_assigned_to_each_ZA' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(indices_selectively_assigned_to_each_ZA, f)
+        
+        with open(crystal_name + '_ZA_idx_unique_thickness_indices_final_save' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(ZA_idx_unique_thickness_indices_final_save, f)
+        
+        with open(crystal_name + '_ZA_idx_unique_thickness_indices_final_save' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(ZA_idx_unique_thickness_indices_final_save, f)
+        
+        with open(crystal_name + '_final_sampled_thickness_for_each_zone_axis_summary' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(final_sampled_thickness_for_each_zone_axis_summary, f)
+        
+        with open(crystal_name + '_per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
+            pickle.dump(per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation, f)        
+    
+    with open(crystal_name + '_orientations_thickness_and_isMirrorSymmetry_for_data_generation' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl', 'wb') as f:
         pickle.dump(deploy_orientations_thickness_and_isMirrorSymmetry_for_data_generation, f)
     
     print("")
@@ -351,7 +369,7 @@ def main():
     print("")
     print("You need following two files for dynamic Bloch method simulations and synthetic training data generation:\n\n")
     print("file 1")
-    print('orientations_thickness_and_isMirrorSymmetry_for_data_generation_' + crystal_name + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl\n\n')
+    print(crystal_name + '_orientations_thickness_and_isMirrorSymmetry_for_data_generation' + '_excitErr%4.3f'%(excitation_error) + '_relIntThresh%4.3f'%(intensThreshold)  + '.pkl\n\n')
     print("file 2")
     print(crystal_name + "_zone_axes_out_of_plane_displacement_%2.1f"%(outOfPlaneAngleDisp) + "_degree.npy\n\n")
     print("orientation and thickness sampling for crystal " + crystal_name + " complete.")
