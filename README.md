@@ -51,7 +51,15 @@ materials project (https://next-gen.materialsproject.org/).
 ./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
 ```
 
-#### How to extract Bragg Disks from experimental 4D-STEM data
+#### How to map a diffraction pattern of 4DSTEM data to a table of detected Bragg disks
+###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern.
+###### This is done by mapping each diffraction pattern to a list (or table) of Bragg disks using correlative template matching
+###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
+###### We gently note that we perform difference of gaussian preprocessing prior to Bragg disk detection to remove backgrounds.
+###### please make sure to make bash files in scripts directory executable by chmod +x 
+```bash
+./scripts/data_analyses_01_mapping_diffractionPattern_to_BraggDiskTable/DATA_ANALYSES_01_map_diffPatt_to_BraggDiskTable.sh
+```
 
 #### How to map experimental diffraction patterns to corresponding orientations
 
