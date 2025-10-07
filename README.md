@@ -52,8 +52,8 @@ materials project (https://next-gen.materialsproject.org/).
 ```
 
 #### How to map a diffraction pattern of 4DSTEM data to a table of detected Bragg disks
-###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern.
-###### This is done by mapping each diffraction pattern to a list (or table) of Bragg disks using correlative template matching
+###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern; we map each diffraction pattern to a list (or table) of Bragg disks.
+###### The map is obtained by detecting Bragg disks in a diffraction pattern using correlative template matching
 ###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
 ###### We gently note that we perform difference of gaussian preprocessing prior to Bragg disk detection to remove backgrounds.
 ###### please make sure to make bash files in scripts directory executable by chmod +x 
