@@ -43,7 +43,15 @@ materials project (https://next-gen.materialsproject.org/).
 ```
 
 #### How to generate synthetic 4D-STEM data
-
+###### step 01. We first sample background signals from experimental 4DSTEM data and make synthetic scanspace filled with crystal grains.
+###### step 02. Thereafter, we randomly sample orienations
+###### step 03,04. Using orientations and sampled background signals, we simulated diffraction patterns and assign it to each scan space pixel.
+###### step 03 generate synthetic 4DSTEM data for single Cu fcc crystal.
+###### step 04 generate synthetic 4DSTEM data for 3 crystals; Cu fcc, Cu2O cubic, CuO monoclinic crystals.
+###### please make sure to make bash files in scripts directory executable by chmod +x 
+```bash
+./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
+```
 
 #### How to extract Bragg Disks from experimental 4D-STEM data
 
