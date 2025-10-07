@@ -8,8 +8,8 @@ conda activate py4DSTEM14.08-envforPlot
 
 echo "Make sure bash files in './scripts/data_generate_01_synthetic_training_data' are executable"
 echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_01_sample_orientation_thickness.sh"
-echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_02_simulate_dynamic_diffraction.sh STEP_03_digitize_dynamic_diffraction.sh STEP_04_merge_and_split.sh"
-echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_03_digitize_dynamic_diffraction.sh STEP_04_merge_and_split.sh"
+echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_02_simulate_dynamic_diffraction.sh"
+echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_03_digitize_dynamic_diffraction.sh"
 echo "chmod +x ./scripts/data_generate_01_synthetic_training_data/STEP_04_merge_and_split.sh"
 
 echo "STEP_01_sample_orientation_thickness.sh"
