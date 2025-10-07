@@ -43,7 +43,7 @@ materials project (https://next-gen.materialsproject.org/).
 ```
 
 #### How to generate synthetic 4D-STEM data
-###### step 01. We first sample background signals from experimental 4DSTEM data and make synthetic scanspace filled with crystal grains.
+###### step 01. We first sample background signals from experimental 4D-STEM data and make synthetic scanspace filled with crystal grains.
 ###### step 02. Thereafter, we randomly sample orienations
 ###### step 03,04. Using orientations and sampled background signals, we simulated diffraction patterns and assign it to each scan space pixel. step 03 generate synthetic 4DSTEM data for single Cu fcc crystal. step 04 generate synthetic 4DSTEM data for 3 crystals; Cu fcc, Cu2O cubic, CuO monoclinic crystals.
 ###### please make sure to make bash files in scripts directory executable by chmod +x 
@@ -51,7 +51,7 @@ materials project (https://next-gen.materialsproject.org/).
 ./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
 ```
 
-#### How to map a diffraction pattern of 4DSTEM data to a table of detected Bragg disks
+#### How to map a diffraction pattern of experimental 4D-STEM data to a table of detected Bragg disks
 ###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern; we map each diffraction pattern to a list (or table) of Bragg disks.
 ###### The map is obtained by detecting Bragg disks in a diffraction pattern using correlative template matching
 ###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
@@ -61,7 +61,7 @@ materials project (https://next-gen.materialsproject.org/).
 ./scripts/data_analyses_01_mapping_diffractionPattern_to_BraggDiskTable/DATA_ANALYSES_01_map_diffPatt_to_BraggDiskTable.sh
 ```
 
-#### How to map experimental diffraction patterns to corresponding orientations
+#### How to predict orientations from experimental 4D-STEM diffraction patterns
 
 
 
