@@ -5,7 +5,8 @@ Created on Tue Sep 23 13:40:45 2025
 
 @author: kwang
 """
-import py4DSTEM
+
+
 import numpy as np
 import pickle
 from modules_step_01_sample_orientation_thickness import action_01_collect_unique_thickness_for_each_zone_axis
@@ -18,7 +19,12 @@ from modules_step_01_sample_orientation_thickness import action_07_generate_dict
 import time
 import argparse
 
-
+import sys
+import os
+current_dir = os.path.dirname(__file__)
+third_party_path = os.path.abspath(os.path.join(current_dir, '..', '..', 'third_party'))
+sys.path.insert(0, third_party_path)
+import py4DSTEM
 
 def parse_args():
     parser = argparse.ArgumentParser(description="information of crystal, path of files, and other parameters for sampling thicknesses and orientations")
