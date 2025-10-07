@@ -10,5 +10,8 @@ name = "orientationMapping"
 version = "0.0.1"
 dependencies = [
 		"numpy",
+		"skimage",
+		"pandas",
+		"scipy",
 		]
 
