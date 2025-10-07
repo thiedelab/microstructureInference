@@ -11,65 +11,6 @@ import torch
 import os
 import argparse
 
-seed = 42
-torch.manual_seed(seed)
-np.random.seed(seed)
-
-# os.environ['TORCH_USE_CUDA_DSA'] = "1"
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
-
-PAD = 0
-
-
-num_bins_radialDistance = int(256)
-num_bins_polarAngle = int(360)
-num_bins_braggintensity = int(256)
-
-max_sequence_length = 76
-
-file_path = os.getcwd() + "/"
-
-
-parser = argparse.ArgumentParser(description="A simple script demonstrating argparse.")
-parser.add_argument("--index", type=int, help="index_of_file")
-args = parser.parse_args()
-
-file_index = int(args.index)
-file_index_string = str(file_index)
-
-file_name = "py4DSTEM_Cu_ori_table_normalize_by_maxInt_5e3_sg0.045_merged_" + file_index_string
-
-
-BD_input = np.load(file_path + file_name + '.npy')
-
-orientation_canonical = np.load(file_path + "rot_canonical_" + file_name + '.npy')
-orientation_original = np.load(file_path + "rot_original_" + file_name + '.npy')
-
-orientation_canonical = torch.tensor(orientation_canonical)
-orientation_original = torch.tensor(orientation_original)
-
-thickness_total = np.load(file_path +"thickness_" + file_name + ".npy")
-thickness_total = torch.tensor(thickness_total)
-thickness_total = thickness_total.reshape((thickness_total.shape[0], 1))
-
-
-mirror_total = np.load(file_path +"mirror_" + file_name + ".npy")
-mirror_total = torch.tensor(mirror_total)
-mirror_total = mirror_total.reshape((mirror_total.shape[0], 1))
-
-
-
-print("BD_input.shape", BD_input.shape)
-print("thickness_total.shape", thickness_total.shape)
-print("mirror_total.shape", mirror_total.shape)
-print("orientation_canonical.shape", orientation_canonical.shape)
-print("orientation_original.shape", orientation_original.shape)
-
-
-num_diffraction_patterns = len(BD_input)
-print("number of diffraction patterns:", num_diffraction_patterns)
-
 def digitize_radial_distance(radial_distances, radial_bins):
     return np.digitize(radial_distances, radial_bins) - 1
 
@@ -180,68 +121,134 @@ def process_pandas_tabular_data(
     
     return list_of_Bragg_disks_total,  radial_bins, radial_bin_centers, angle_bins, angle_bin_centers, intensity_bins, intensity_bin_centers
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="information of crystal, path of files, and other parameters for sampling thicknesses and orientations")
+    parser.add_argument("--index", type=int, help="index_of_file", default = int(0))
+    parser.add_argument("--crystal", type = str, help="nomenclature of crystal", default = "Cu_fcc")
+    parser.add_argument("--directoryPath", type = str, help="path of directory where unit cell cif file is located", default = "./")
+    parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.045))
+    parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(5e-3))
+    return parser.parse_args()
 
-(list_of_Bragg_disks_total,  \
- radial_bins, radial_bin_centers, \
- angle_bins, angle_bin_centers, \
- intensity_bins, intensity_bin_centers) = process_pandas_tabular_data(
-                                                    BD_input, 
-                                                    num_bins_radialDistance, 
-                                                    num_bins_polarAngle, 
-                                                    num_bins_braggintensity, 
-                                                    max_sequence_length)
+def main():
+
+    seed = 42
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("torch device is: ", device)
+    
+    PAD = 0
+    
+    num_bins_radialDistance = int(256)
+    num_bins_polarAngle = int(360)
+    num_bins_braggintensity = int(256)
+    
+    max_sequence_length = 76
+    
+    file_path = os.getcwd() + "/"
+    
+    args = parse_args()
+    crystal_name = args.crystal
+    file_path = args.directoryPath
+    excitation_error = float(args.excitError)
+    intensThreshold = float(args.intensThreshold)
+    
+    
+    file_index = int(args.index)
+    file_index_string = str(file_index)
+    
+    file_name = crystal_name +"_ori_table_normalize_by_excitErr%4.3f_relIntThresh%4.3f_%d"%(excitation_error, intensThreshold, file_index_string)
+    
+    
+    BD_input = np.load(file_path + file_name + '.npy')
+    
+    orientation_canonical = np.load(file_path + "rot_canonical_" + file_name + '.npy')
+    orientation_original = np.load(file_path + "rot_original_" + file_name + '.npy')
+    
+    orientation_canonical = torch.tensor(orientation_canonical)
+    orientation_original = torch.tensor(orientation_original)
+    
+    thickness_total = np.load(file_path +"thickness_" + file_name + ".npy")
+    thickness_total = torch.tensor(thickness_total)
+    thickness_total = thickness_total.reshape((thickness_total.shape[0], 1))
+    
+    
+    mirror_total = np.load(file_path +"mirror_" + file_name + ".npy")
+    mirror_total = torch.tensor(mirror_total)
+    mirror_total = mirror_total.reshape((mirror_total.shape[0], 1))
+    
+    
+    
+    print("BD_input.shape", BD_input.shape)
+    print("thickness_total.shape", thickness_total.shape)
+    print("mirror_total.shape", mirror_total.shape)
+    print("orientation_canonical.shape", orientation_canonical.shape)
+    print("orientation_original.shape", orientation_original.shape)
+    
+    
+    num_diffraction_patterns = len(BD_input)
+    print("number of diffraction patterns:", num_diffraction_patterns)
+    
+    
+    
+    
+    (list_of_Bragg_disks_total,  \
+     radial_bins, radial_bin_centers, \
+     angle_bins, angle_bin_centers, \
+     intensity_bins, intensity_bin_centers) = process_pandas_tabular_data(
+                                                        BD_input, 
+                                                        num_bins_radialDistance, 
+                                                        num_bins_polarAngle, 
+                                                        num_bins_braggintensity, 
+                                                        max_sequence_length)
+    
+    
+    
+    del BD_input
+    
+    ###############################################################################
+    ######## STEP 1. ADD [PAD] tokens and SHUFFLE processed data
+    
+    list_of_Bragg_disks_total = torch.nn.utils.rnn.pad_sequence(
+                                                        list_of_Bragg_disks_total, 
+                                                        batch_first=True, 
+                                                        padding_value = PAD)
+    
+    
+    permuted_indices_total = torch.randperm(orientation_canonical.size(0))
+    print("list_of_Bragg_disks_total.shape", list_of_Bragg_disks_total.shape)
+    print("list_of_Bragg_disks_total[0].shape", list_of_Bragg_disks_total[0].shape)
+    print("list_of_Bragg_disks_total[0]\n", list_of_Bragg_disks_total[0], "\n")
+    
+    list_of_Bragg_disks_total = list_of_Bragg_disks_total[permuted_indices_total]
+    orientation_canonical = orientation_canonical[permuted_indices_total]
+    orientation_original = orientation_original[permuted_indices_total]
+    thickness_total = thickness_total[permuted_indices_total]
+    mirror_total = mirror_total[permuted_indices_total]
+    
+    print("list_of_Bragg_disks_total.shape", list_of_Bragg_disks_total.shape)
+    print("orientation_canonical.shape", orientation_canonical.shape)
+    print("orientation_original.shape", orientation_original.shape)
+    print("mirror_total.shape", mirror_total.shape)
+    print("thickness_total.shape", thickness_total.shape)
+    
+    print("mirror_total\n", mirror_total, "\n")
+    print("thickness_total\n", thickness_total, "\n")
+    
+    np.save(file_path + crystal_name + "_list_of_Bragg_disks_total_" + file_index_string + ".npy", list_of_Bragg_disks_total.detach().cpu().numpy())
+    np.save(file_path + crystal_name + "_thickness_" + file_index_string + ".npy", thickness_total.detach().cpu().numpy())
+    np.save(file_path + crystal_name + "_mirror_" + file_index_string + ".npy", mirror_total.detach().cpu().numpy())
+    
+    np.save(file_path + crystal_name + "_orientation_canonical_" + file_index_string + ".npy", orientation_canonical.detach().cpu().numpy())
+    np.save(file_path + crystal_name + "_orientation_original_" + file_index_string + ".npy", orientation_original.detach().cpu().numpy())
+    
+    np.save(file_path + crystal_name + "_permuted_indices_" + file_index_string + ".npy", permuted_indices_total.detach().cpu().numpy())
+    
+    
+    print("JOB DONE.")
 
 
-
-del BD_input
-
-###############################################################################
-######## STEP 1. ADD [PAD] tokens and SHUFFLE processed data
-
-list_of_Bragg_disks_total = torch.nn.utils.rnn.pad_sequence(
-                                                    list_of_Bragg_disks_total, 
-                                                    batch_first=True, 
-                                                    padding_value = 0)
-
-
-permuted_indices_total = torch.randperm(orientation_canonical.size(0))
-print("list_of_Bragg_disks_total.shape", list_of_Bragg_disks_total.shape)
-print("list_of_Bragg_disks_total[0].shape", list_of_Bragg_disks_total[0].shape)
-print("list_of_Bragg_disks_total[0]\n", list_of_Bragg_disks_total[0], "\n")
-
-list_of_Bragg_disks_total = list_of_Bragg_disks_total[permuted_indices_total]
-orientation_canonical = orientation_canonical[permuted_indices_total]
-orientation_original = orientation_original[permuted_indices_total]
-thickness_total = thickness_total[permuted_indices_total]
-mirror_total = mirror_total[permuted_indices_total]
-
-print("list_of_Bragg_disks_total.shape", list_of_Bragg_disks_total.shape)
-print("orientation_canonical.shape", orientation_canonical.shape)
-print("orientation_original.shape", orientation_original.shape)
-print("mirror_total.shape", mirror_total.shape)
-print("thickness_total.shape", thickness_total.shape)
-
-print("mirror_total\n", mirror_total, "\n")
-print("thickness_total\n", thickness_total, "\n")
-
-np.save(file_path + "list_of_Bragg_disks_total_" + file_index_string + ".npy", list_of_Bragg_disks_total.detach().cpu().numpy())
-np.save(file_path + "thickness_" + file_index_string + ".npy", thickness_total.detach().cpu().numpy())
-np.save(file_path + "mirror_" + file_index_string + ".npy", mirror_total.detach().cpu().numpy())
-
-np.save(file_path + "orientation_canonical_" + file_index_string + ".npy", orientation_canonical.detach().cpu().numpy())
-np.save(file_path + "orientation_original_" + file_index_string + ".npy", orientation_original.detach().cpu().numpy())
-
-np.save(file_path + "permuted_indices_" + file_index_string + ".npy", permuted_indices_total.detach().cpu().numpy())
-
-
-# torch.save(list_of_Bragg_disks_total, file_path + "list_of_Bragg_disks_total_" + file_index_string + ".pt")
-# torch.save(labels_total, file_path + "labels_" + file_index_string + ".pt")
-# torch.save(thickness_total, file_path + "thickness_" + file_index_string + ".pt")
-# torch.save(mirror_total, file_path + "mirror_" + file_index_string + ".pt")
-# torch.save(permuted_indices_total, file_path + "permuted_indices_" + file_index_string + ".pt")
-
-# zeros_indicator_tensor = torch.zeros_like(mirror_total, dtype = torch.int32)
-# torch.save(zeros_indicator_tensor, file_path + "indicator_indices_" + file_index_string + ".pt")
-# print("zeros_indicator_tensor\n", zeros_indicator_tensor, "\n")
-
-print("JOB DONE.")
+if __name__ == "__main__":
+    main()
