@@ -13,7 +13,7 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 
 
 ### Crystal Structures Used
-The unit cell cif files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/) database:
+The unit cell cif files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/):
 
 | ICSD collection code | Chemical formula | crystal space group | crystal space group IT number | variable string used in codes |
 |:--------------------:|:----------------:|:-------------------:|:-----------------------------:|:-----------------------------:|
@@ -37,6 +37,7 @@ materials project (https://next-gen.materialsproject.org/).
 ###### step 02. From the sampled orientations and thickness, we simulate dynamic diffraction patterns and save them in table format.
 ###### step 03. For each diffraction pattern, we further digitize Bragg disk positions and intensities (still in table format)
 ###### step 04. Finally, we merge all data and split it into training data and validation data
+<small>please make sure to make bash scripts in scripts directory executable: chmod +x DATA_GENERATE_01_generate_synthetic_training_data.sh</small> 
 ```bash
 ./scripts/data_generate_01_synthetic_training_data/DATA_GENERATE_01_generate_synthetic_training_data.sh
 ```
