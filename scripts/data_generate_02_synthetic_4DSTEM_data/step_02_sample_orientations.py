@@ -1,6 +1,7 @@
 import py4DSTEM
 import numpy as np
 import math
+import argparse
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 
@@ -75,35 +76,48 @@ def sample_polarAngles_on_unit_circle(number_of_polar_angles_to_sample):
     theta = np.random.uniform(0, 2 * np.pi, number_of_polar_angles_to_sample)
     return theta
 
-print("")
-print("Action 1. Sampling random orientation (rotation) matrix (START)\n")
+def parse_args():
+    parser = argparse.ArgumentParser(description="number for sampling random orienations")
+    parser.add_argument("--num_orientations", type = int, help="number of randomly sampled orientations", default = int(60))
+ 
+    return parser.parse_args()
 
-number_of_orientations_to_sample = 60
-
-randomly_sampled_zone_axes = sample_zone_axes_on_unit_sphere(number_of_orientations_to_sample)
-randomly_sampled_inPlane_angle = sample_polarAngles_on_unit_circle(number_of_orientations_to_sample)
-
-
-randomly_sampled_orientation_matrices = []
-
-for i in range(number_of_orientations_to_sample):
-    zone_axes_rotation_matrix = calculate_rotation_matrix_for_zone_axis(randomly_sampled_zone_axes[i])
+def main():
     
-    in_plane_rotation_matrix = rotation_wrt_zAxis(randomly_sampled_inPlane_angle[i])
-
-    rotation_matrix = zone_axes_rotation_matrix @ in_plane_rotation_matrix
+    args = parse_args()
+    number_of_orientations_to_sample = args.num_orientations
     
-    randomly_sampled_orientation_matrices.append(rotation_matrix)
-    
-    assert math.isclose(np.linalg.norm(randomly_sampled_zone_axes[i]), 1.0, abs_tol = 1e-5), "zone axis does not lie on unit sphere"
-    assert math.isclose(np.linalg.det(rotation_matrix), 1.0, abs_tol = 1e-5), "randomly sampled rotation matrix is not SO3 proper rotation"
+    print("")
+    print("Action 1. Sampling random orientation (rotation) matrix (START)\n")
+        
+    randomly_sampled_zone_axes = sample_zone_axes_on_unit_sphere(number_of_orientations_to_sample)
+    randomly_sampled_inPlane_angle = sample_polarAngles_on_unit_circle(number_of_orientations_to_sample)
     
     
+    randomly_sampled_orientation_matrices = []
+    
+    for i in range(number_of_orientations_to_sample):
+        zone_axes_rotation_matrix = calculate_rotation_matrix_for_zone_axis(randomly_sampled_zone_axes[i])
+        
+        in_plane_rotation_matrix = rotation_wrt_zAxis(randomly_sampled_inPlane_angle[i])
+    
+        rotation_matrix = zone_axes_rotation_matrix @ in_plane_rotation_matrix
+        
+        randomly_sampled_orientation_matrices.append(rotation_matrix)
+        
+        assert math.isclose(np.linalg.norm(randomly_sampled_zone_axes[i]), 1.0, abs_tol = 1e-5), "zone axis does not lie on unit sphere"
+        assert math.isclose(np.linalg.det(rotation_matrix), 1.0, abs_tol = 1e-5), "randomly sampled rotation matrix is not SO3 proper rotation"
+        
+        
+    
+    randomly_sampled_orientation_matrices = np.array(randomly_sampled_orientation_matrices)
+    np.save("./randomly_sampled_%d_orientation_matrices_SO3.npy"%(number_of_orientations_to_sample), randomly_sampled_orientation_matrices)
+    
+    print("sampled and saved ", randomly_sampled_orientation_matrices.shape[0], " orientations.\n")
+    print("Action 1. Sampling random orientation (rotation) matrix (END)\n\n")
+    
+    print("JOB DONE.")
+    
 
-randomly_sampled_orientation_matrices = np.array(randomly_sampled_orientation_matrices)
-np.save("./randomly_sampled_%d_orientation_matrices_SO3.npy"%(number_of_orientations_to_sample), randomly_sampled_orientation_matrices)
-
-print("sampled and saved ", randomly_sampled_orientation_matrices.shape[0], " orientations.\n")
-print("Action 1. Sampling random orientation (rotation) matrix (END)\n\n")
-
-print("JOB DONE.")
+if __name__ == "__main__":
+    main()
