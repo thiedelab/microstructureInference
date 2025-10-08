@@ -11,6 +11,7 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 - Modified version of py4DSTEM codes are in third_party directory
 - The original py4DSTEM project is available at: https://github.com/py4dstem/py4DSTEM
 
+---
 
 ### Crystal Structures Used
 The unit cell cif files used in this study are based on entries from the Inorganic Crystal Structure Database (ICSD) (https://icsd.products.fiz-karlsruhe.de/):
@@ -30,6 +31,8 @@ materials project (https://next-gen.materialsproject.org/).
 ### Descriptions for training neural networks models
 
 ### Descriptions of scripts for data generation and data analysis
+
+---
 
 #### How to generate synthetic training data for training neural network models
 
