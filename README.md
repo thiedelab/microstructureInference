@@ -16,9 +16,9 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 ```bash
 python -m pip install .
 ```
-Then install torch>=2.6.0 and torchvision>=0.23.0 with CUDA build.
+##### Then install torch>=2.6.0 and torchvision>=0.23.0 with CUDA build.
 
-##### (optional) you can run the following command to install torch, torchvision, and cuda build
+###### (optional) you can run the following command to install torch, torchvision, and cuda build
 ```bash
 pip install -r requirements-cuda.txt
 ```
