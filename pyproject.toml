@@ -14,5 +14,7 @@ dependencies = [
 		"pandas",
 		"pandas>=2.2.3",
 		"scipy>=1.15.2",
+		"torch>=2.8.0"
+		"torchvision>=0.15.2"
 		]
 
