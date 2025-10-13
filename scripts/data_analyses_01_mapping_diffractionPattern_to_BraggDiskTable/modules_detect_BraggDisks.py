@@ -144,18 +144,16 @@ def detect_Bragg_Disks_in_4DSTEM_data(aligned_data,
     #####
     ########################################################################
     
-    bragg_vector_map_centered = bragg_peaks.get_bvm()
-    bvm_c = bragg_vector_map_centered
     qx0_meas,qy0_meas,mask_meas = bragg_peaks.measure_origin()
     bragg_peaks.calibration.get_origin_meas()
     qx0_fit,qy0_fit,qx0_residuals,qy0_residuals = bragg_peaks.fit_origin()
 
     # compute
-    bvm = bragg_peaks.histogram(
-        sampling = sampling,
-    )
+    # bvm = bragg_peaks.histogram(
+    #     sampling = sampling,
+    # )
     
-    bvm_r = bragg_peaks.histogram( mode='raw', sampling=sampling )
+    # bvm_r = bragg_peaks.histogram( mode='raw', sampling=sampling )
     bvm_c = bragg_peaks.histogram( mode='cal', sampling=sampling )
     
     
@@ -164,16 +162,13 @@ def detect_Bragg_Disks_in_4DSTEM_data(aligned_data,
         center = bvm_c.origin,
         fitradii = q_range,
     )
+    
     bragg_peaks.calibration.set_p_ellipse(p_ellipse)
     bragg_peaks.setcal()
-    bvm_e = bragg_peaks.histogram(
-        sampling=sampling
-    )
+    # bvm_e = bragg_peaks.histogram(
+    #     sampling=sampling
+    # )
     
-
-    q, intensity_radial = py4DSTEM.process.utils.radial_integral(
-        bragg_vector_map_centered,
-    )
     
     k_max = pixel_size_inv_Ang_guess * (diffraction_pattern_x_size / 2)
     
@@ -194,9 +189,9 @@ def detect_Bragg_Disks_in_4DSTEM_data(aligned_data,
     );
     
     bragg_peaks.setcal()
-    bvm_p = bragg_peaks.histogram(
-        sampling=sampling
-    )
+    # bvm_p = bragg_peaks.histogram(
+    #     sampling=sampling
+    # )
     
     print("\n")
     
