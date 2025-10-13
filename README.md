@@ -68,10 +68,12 @@ materials project (https://next-gen.materialsproject.org/).
 ```
 
 #### Analysis 1. How to map a diffraction pattern of experimental 4D-STEM data to a table of detected Bragg disks
+
 ###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern; we map each diffraction pattern to a list (or table) of Bragg disks.
 ###### The map is obtained by detecting Bragg disks in a diffraction pattern using correlative template matching
 ###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
 ###### We gently note that we perform difference of gaussian preprocessing prior to Bragg disk detection to remove backgrounds.
+###### For this step, you would need raw experimental 4D-STEM data.
 ```bash
 ./scripts/data_analyses_01_mapping_diffractionPattern_to_BraggDiskTable/DATA_ANALYSES_01_map_diffPatt_to_BraggDiskTable.sh
 ```
@@ -88,7 +90,7 @@ materials project (https://next-gen.materialsproject.org/).
 #### Analysis 3. How to measure correlation between experimental Bragg disks and simulated Bragg disks from predicted orientation
 
 ###### For this step, please note that you need "pkl", "h5", "npy" files generated from Analysis 2. & Analysis 1. steps.
-###### For this step, you would also need raw 4D-STEM data.
+###### For this step, you would also need raw experimental 4D-STEM data used in Analysis 1.
 
 ```bash
 ./scripts/data_analyses_03_measure_correlation_between_experiments_and_predictions/DATA_ANALYSES_03_measure_correlation_between_prediction_and_experimental_data.sh
