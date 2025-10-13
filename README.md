@@ -40,8 +40,7 @@ materials project (https://next-gen.materialsproject.org/).
 ./scripts/training_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
 ```
 
-###### Once trained, you can use the model to map experimental diffraction patterns to orientations of crystals.
-###### The "./scripts/data_analyses_02_check_performance_of_orientationPrediction" directory contains scripts for the mapping (see below)
+###### Once trained, you can use the model to map experimental diffraction patterns to orientations of crystals. The "./scripts/data_analyses_02_check_performance_of_orientationPrediction" directory contains scripts for the mapping (see below)
 
 ---
 
