@@ -11,7 +11,7 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 - Modified version of py4DSTEM codes are in third_party directory
 - The original py4DSTEM project is available at: https://github.com/py4dstem/py4DSTEM
 
-## How to install
+## How to install source codes
 ##### First install project dependencies from pyproject.toml
 ```bash
 python -m pip install .
