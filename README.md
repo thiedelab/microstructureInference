@@ -31,16 +31,23 @@ materials project (https://next-gen.materialsproject.org/).
 
 ### Descriptions for training neural networks models
 
-###### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels
-###### The "./scripts" directory contains scripts for generating synthetic training and validation data (look below)
 ###### please make sure to make bash files in scripts directory executable by chmod +x 
+
+###### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels
+###### The "./scripts/data_generate_01_synthetic_training_data" directory contains scripts for generating synthetic training and validation data (see below)
 
 ```bash
 ./scripts/training_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
 ```
+
+###### Once trained, you can use the model to map experimental diffraction patterns to orientations of crystals.
+###### The "./scripts/data_analyses_02_check_performance_of_orientationPrediction" directory contains scripts for the mapping (see below)
+
 ---
 
 ### Descriptions of scripts for data generation and data analysis
+
+###### please make sure to make bash files in scripts directory executable by chmod +x 
 
 #### How to generate synthetic training data for training neural network models
 
@@ -48,7 +55,6 @@ materials project (https://next-gen.materialsproject.org/).
 ###### step 02. From the sampled orientations and thickness, we simulate dynamic diffraction patterns and save them in table format.
 ###### step 03. For each diffraction pattern, we further digitize Bragg disk positions and intensities (still in table format)
 ###### step 04. Finally, we merge all data and split it into training data and validation data
-###### please make sure to make bash files in scripts directory executable by chmod +x 
 ```bash
 ./scripts/data_generate_01_synthetic_training_data/DATA_GENERATE_01_generate_synthetic_training_data.sh
 ```
@@ -58,7 +64,6 @@ materials project (https://next-gen.materialsproject.org/).
 ###### step 02. Thereafter, we randomly sample orienations
 ###### step 03,04. 
 ###### Using orientations and sampled background signals, we simulated diffraction patterns and assign it to each scan space pixel. step 03 generate synthetic 4DSTEM data for single Cu fcc crystal. step 04 generate synthetic 4DSTEM data for 3 crystals; Cu fcc, Cu2O cubic, CuO monoclinic crystals.
-###### please make sure to make bash files in scripts directory executable by chmod +x 
 ```bash
 ./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
 ```
@@ -68,7 +73,6 @@ materials project (https://next-gen.materialsproject.org/).
 ###### The map is obtained by detecting Bragg disks in a diffraction pattern using correlative template matching
 ###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
 ###### We gently note that we perform difference of gaussian preprocessing prior to Bragg disk detection to remove backgrounds.
-###### please make sure to make bash files in scripts directory executable by chmod +x 
 ```bash
 ./scripts/data_analyses_01_mapping_diffractionPattern_to_BraggDiskTable/DATA_ANALYSES_01_map_diffPatt_to_BraggDiskTable.sh
 ```
@@ -77,7 +81,6 @@ materials project (https://next-gen.materialsproject.org/).
 
 ###### For this step, please note that you need "h5" file generated Analysis 1. step
 
-###### please make sure to make bash files in scripts directory executable by chmod +x 
 
 ```bash
 ./scripts/data_analyses_02_check_performance_of_orientationPrediction/DATA_ANALYSES_02_predict_orientations.sh
@@ -88,7 +91,6 @@ materials project (https://next-gen.materialsproject.org/).
 ###### For this step, please note that you need "pkl", "h5", "npy" files generated from Analysis 2. step.
 ###### For this step, you would also need raw 4D-STEM data.
 
-###### please make sure to make bash files in scripts directory executable by chmod +x 
 ```bash
 ./scripts/data_analyses_03_measure_correlation_between_experiments_and_predictions/DATA_ANALYSES_03_measure_correlation_between_prediction_and_experimental_data.sh
 ```
