@@ -416,7 +416,7 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
                                     orientation_matrix = orientation_matrix,
                                     sigma_excitation_error = excitation_error,
                                     tol_intensity = 0.0,
-                                    k_max = k_max * 6.,
+                                    k_max = k_max,
         )
         
         dynamic_patterns = crystal.generate_dynamical_diffraction_pattern(
@@ -503,9 +503,9 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
         
         # print("np.where(np.array(average_intensity_collection) <1e-6)[0]\n",np.where(np.array(average_intensity_collection) <1e-6)[0])
         # print("np.min(np.array(average_intensity_collection))", np.min(np.array(average_intensity_collection)))            
-        print("number of sampled thickness for given zone axis:", len(unique_thickness_given_pattern))
-        print("maximum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.max(np.array(number_of_Bragg_disks)))
-        print("minimum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.min(np.array(number_of_Bragg_disks)))
+        # print("number of sampled thickness for given zone axis:", len(unique_thickness_given_pattern))
+        # print("maximum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.max(np.array(number_of_Bragg_disks)))
+        # print("minimum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.min(np.array(number_of_Bragg_disks)))
         
         total_maximum_number_of_Bragg_disks.append(np.max(np.array(number_of_Bragg_disks)))
         total_unique_thicknesses.append(unique_thickness_given_pattern)
@@ -514,7 +514,7 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
     
     print("")
     total_maximum_number_of_Bragg_disks = np.array(total_maximum_number_of_Bragg_disks)
-    print("For ", len(zone_axes), " zone axes, maximum number of Bragg disks in a pattern within a circle with radius", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, " is", np.max(total_maximum_number_of_Bragg_disks))
+    # print("For ", len(zone_axes), " zone axes, maximum number of Bragg disks in a pattern within a circle with radius", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, " is", np.max(total_maximum_number_of_Bragg_disks))
     print("")
         
         
@@ -709,7 +709,7 @@ def action_06_check_symmetry_for_each_ZA_each_thickness(
                                     orientation_matrix = orientation_matrix,
                                     sigma_excitation_error = excitation_error,
                                     tol_intensity = 0.0,
-                                    k_max = k_max * 6.,
+                                    k_max = k_max,
         )
         
         dynamic_patterns = crystal.generate_dynamical_diffraction_pattern(

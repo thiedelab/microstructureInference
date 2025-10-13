@@ -31,8 +31,8 @@ def parse_args():
     parser.add_argument("--crystal", type = str, help="nomenclature of crystal", default = "Cu_fcc")
     parser.add_argument("--directoryPath", type = str, help="path of directory where unit cell cif file is located", default = "./")
     parser.add_argument("--outOfPlaneAngleDisp", type=float, help="out of plane angle displacement used in py4DSTEM orientation plan", default = float(2))
-    parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.045))
-    parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(5e-3))
+    parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.025))
+    parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(1e-3))
     parser.add_argument("--saveIntermediatePklFiles", type=int, help="whether to save intermediate pikcle files; can be helpful for debug.", default = 0)
     
     return parser.parse_args()
@@ -94,12 +94,12 @@ def main():
         k_max,
     )
     
-    crystal.calculate_structure_factors(k_max * 4.)
+    crystal.calculate_structure_factors(k_max)
         
     # Convert the V_g to relativistic-corrected U_g and store in a datastructure optimized
     # for access by the Bloch code
     crystal.calculate_dynamical_structure_factors(
-        accelerating_voltage, "WK-CP", k_max=k_max * 4., thermal_sigma=0.08, tol_structure_factor=-1.0
+        accelerating_voltage, "WK-CP", k_max=k_max * 2., thermal_sigma=0.08, tol_structure_factor=-1.0
     )
     
     
