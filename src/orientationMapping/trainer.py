@@ -15,15 +15,20 @@ def save_checkpoint(model, optimizer, scheduler, epoch, checkpoint_path):
     }
     torch.save(checkpoint, checkpoint_path)
     
-def load_checkpoint(model, optimizer, scheduler, checkpoint_path):
-    checkpoint = torch.load(checkpoint_path)
+def load_checkpoint(model, optimizer, scheduler, checkpoint_path, device):
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-    epoch = checkpoint['epoch']
-    print(f"Checkpoint loaded from epoch {epoch}")
-    return epoch
 
+    # Start from the next epoch
+    start_epoch = checkpoint['epoch'] + 1
+
+    # Resume scheduler with last_epoch as the last epoch in the checkpoint
+    scheduler.last_epoch = checkpoint['epoch']
+
+    return model, optimizer, scheduler, start_epoch
 
 def train_epoch(model, dataloader, optimizer, device, PAD = 0):
     model.train()
