@@ -87,7 +87,7 @@ materials project (https://next-gen.materialsproject.org/).
 
 #### Analysis 3. How to measure correlation between experimental Bragg disks and simulated Bragg disks from predicted orientation
 
-###### For this step, please note that you need "pkl", "h5", "npy" files generated from Analysis 2. step.
+###### For this step, please note that you need "pkl", "h5", "npy" files generated from Analysis 2. & Analysis 1. steps.
 ###### For this step, you would also need raw 4D-STEM data.
 
 ```bash
