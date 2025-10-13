@@ -1,10 +1,10 @@
-from LossFunctions import mirrorMap_crossEntropy_loss, composite_objective_criterion
+from orientationMapping.LossFunctions import mirrorMap_crossEntropy_loss, composite_objective_criterion
 import torch
 import numpy as np
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
-import preProcessDataModule as pPd
+#import orientationMapping.dataModules as pPd
 
 def save_checkpoint(model, optimizer, scheduler, epoch, checkpoint_path):
     checkpoint = {

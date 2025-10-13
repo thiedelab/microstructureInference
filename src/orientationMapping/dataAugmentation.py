@@ -187,7 +187,7 @@ class RemoveBraggDisksWithWeakInten(v2.Transform):
 
 class uniformIntensityScaling_gaussianNoise(v2.Transform):
 
-    def __init__(self, feature_maxBinIdx = 256, mean = 1, std = 0.3):
+    def __init__(self, feature_maxBinIdx = 256, mean = 1, std = 0.2):
         super().__init__()
         self.feature_maxBinIdx = feature_maxBinIdx
         self.mean = mean
@@ -230,7 +230,7 @@ class normalize_intensity(v2.Transform):
 
 class individualIntensityScaling_gaussianNoise(v2.Transform):
 
-    def __init__(self, feature_maxBinIdx = 256, mean = 1, std = 0.3):
+    def __init__(self, feature_maxBinIdx = 256, mean = 1, std = 0.25):
         super().__init__()
         self.feature_maxBinIdx = feature_maxBinIdx
         self.mean = mean
@@ -253,43 +253,6 @@ class individualIntensityScaling_gaussianNoise(v2.Transform):
     def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         return self.individualScale(inpt)
 
-class displaceFeature_GaussianNoise_polar(v2.Transform):
-
-    def __init__(self, feature_axis, feature_maxBinIdx, mean = 0.0, std = 2, fractionToAddNoise = 0.8):
-        super().__init__()
-        self.mean = mean
-        self.std = std
-        self.fractionToAddNoise = fractionToAddNoise
-        self.feature_axis = feature_axis
-        self.feature_maxBinIdx = feature_maxBinIdx
-
-    def add_gaussian_noise(
-                        self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
-
-        idx_of_BraggDisks = torch.where(torch.sum(BraggDiskList, dim = 1) > 0)[0]
-        numberOfBraggDisks_to_contaminate = int(len(idx_of_BraggDisks) * self.fractionToAddNoise)
-
-        if numberOfBraggDisks_to_contaminate > 1:
-            permuted_indices = torch.randperm(len(idx_of_BraggDisks))
-            indices_of_BraggDisks_permuted = idx_of_BraggDisks[permuted_indices]
-            BraggDiskList_after_contamination = BraggDiskList.clone().detach()
-            gaussian_noise = torch.zeros((numberOfBraggDisks_to_contaminate, 3), dtype = torch.int64)
-            gaussian_noise[:,self.feature_axis] = torch.round(torch.normal(self.mean, self.std, (numberOfBraggDisks_to_contaminate,))).type(torch.int64)
-            new_feature_vals_after_noise_addition = BraggDiskList[indices_of_BraggDisks_permuted[:numberOfBraggDisks_to_contaminate]] + gaussian_noise
-
-            negative_indices_for_axis_1_polar_angle = torch.where(new_feature_vals_after_noise_addition[:, self.feature_axis] < 0)[0]
-
-            if len(negative_indices_for_axis_1_polar_angle) > 0:
-                new_feature_vals_after_noise_addition[:, self.feature_axis][negative_indices_for_axis_1_polar_angle] = new_feature_vals_after_noise_addition[:, self.feature_axis][negative_indices_for_axis_1_polar_angle] + torch.tensor([int(self.feature_maxBinIdx)], dtype = torch.int64)
-            new_feature_vals_after_noise_addition[:, self.feature_axis] = torch.clamp(new_feature_vals_after_noise_addition[:, self.feature_axis],  max = self.feature_maxBinIdx - 1)
-            BraggDiskList_after_contamination[indices_of_BraggDisks_permuted[:numberOfBraggDisks_to_contaminate]] = new_feature_vals_after_noise_addition
-
-            return BraggDiskList_after_contamination
-        else:
-            return BraggDiskList
-
-    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        return self.add_gaussian_noise(inpt)
 
 class displaceFeature_GaussianNoise(v2.Transform):
 
@@ -381,96 +344,39 @@ class addFalsePositiveBraggDisks(v2.Transform):
     def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         return self.add_false_positives(inpt)
 
-class intensity_permutation(v2.Transform):
-
-    def __init__(self, feature_maxBinIdx, feature_axis = 2, min_clamp_index = 1):
-        super().__init__()
-        self.feature_maxBinIdx = feature_maxBinIdx
-        self.feature_axis = feature_axis
-        self.min_clamp_index = min_clamp_index
-    
-    def apply_intensity_permutation_move(
-                        self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
-    
-        idx_of_BraggDisks = torch.where(torch.sum(BraggDiskList, dim = 1) > 0)[0]
-        numberOfBraggDisks_to_permute = int(len(idx_of_BraggDisks))
-
-        if numberOfBraggDisks_to_permute > 1:
-            permuted_indices = torch.randperm(numberOfBraggDisks_to_permute)
-            indices_of_BraggDisks_permuted = idx_of_BraggDisks[permuted_indices]
-            BraggDiskList_after_permutation = BraggDiskList.clone().detach()
-            BraggDiskList_after_permutation[idx_of_BraggDisks[:numberOfBraggDisks_to_permute], self.feature_axis] = BraggDiskList_after_permutation[indices_of_BraggDisks_permuted[:numberOfBraggDisks_to_permute], self.feature_axis]
-
-            return BraggDiskList_after_permutation
-        else:
-            return BraggDiskList
-            
-    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        return self.apply_intensity_permutation_move(inpt)
-
-class random_intensity_assignment(v2.Transform):
-
-    def __init__(self, feature_maxBinIdx, feature_axis = 2,std = 20, min_clamp_index = 1):
-        super().__init__()
-        self.feature_maxBinIdx = feature_maxBinIdx
-        self.feature_axis = feature_axis
-        self.min_clamp_index = min_clamp_index
-        self.mean = int(feature_maxBinIdx * 0.5)
-        self.std = std
-    
-    def apply_random_intensity_assignment(
-                        self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
-    
-        idx_of_BraggDisks = torch.where(torch.sum(BraggDiskList, dim = 1) > 0)[0]
-
-        random_intensities = torch.round(torch.normal(self.mean, self.std, (len(idx_of_BraggDisks),))).type(torch.int64)
-        random_intensities = torch.clamp(random_intensities, min = self.min_clamp_index , max = self.feature_maxBinIdx - 1)
-
-
-        BraggDiskList_after_assignment = BraggDiskList.clone().detach()
-        BraggDiskList_after_assignment[idx_of_BraggDisks, self.feature_axis] = random_intensities
-
-        return BraggDiskList_after_assignment
-            
-    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        return self.apply_random_intensity_assignment(inpt)
 
 def custom_transforms_for_Data_Aug(num_bins_radialDistance, 
                                     num_bins_polarAngle, 
                                     num_bins_braggintensity):
     
-    # uniform_intScaling = uniformIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
+    uniform_intScaling = uniformIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
     individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
-    # random_choice_of_int_Scaling = v2.RandomChoice([uniform_intScaling, individ_intScaling])
-    random_int_Assignment = random_intensity_assignment(feature_maxBinIdx = num_bins_braggintensity)
-
-    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.90)
-    random_apply_int_Assign = v2.RandomApply(transforms = [random_int_Assignment], p = 0.4)
+    random_choice_of_int_Scaling = v2.RandomChoice([uniform_intScaling, individ_intScaling])
+    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.80)
 
 
     Displace_R = displaceFeature_GaussianNoise(feature_axis = 0, 
                                                  feature_maxBinIdx = num_bins_radialDistance, 
                                                  mean = 0.0, 
-                                                 std = 1.7, 
-                                                 fractionToAddNoise = 0.90,
-                                                 min_clamp_index = 1)
+                                                 std = 1.6, 
+                                                 fractionToAddNoise = 0.80)
 
-    Displace_A = displaceFeature_GaussianNoise_polar(feature_axis = 1, 
+    Displace_A = displaceFeature_GaussianNoise(feature_axis = 1, 
                                                  feature_maxBinIdx = num_bins_polarAngle, 
                                                  mean = 0.0, 
                                                  std = 1.2, 
-                                                 fractionToAddNoise = 0.90)
+                                                 fractionToAddNoise = 0.80)
 
     Displace_I = displaceFeature_GaussianNoise(feature_axis = 2, 
                                                  feature_maxBinIdx = num_bins_braggintensity, 
                                                  mean = 0.0, 
-                                                 std = 20, 
-                                                 fractionToAddNoise = 1.0,
+                                                 std = 18, 
+                                                 fractionToAddNoise = 0.90,
                                                  min_clamp_index = 1)
     
-    random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.65)
-    random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.65)
-    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.90)
+    random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.6)
+    random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.6)
+    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
 
 
     #### REMOVE BRAGG DISKS transforms
@@ -489,8 +395,8 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
                                             RemoveBraggDisksWithWeakInten(fractionToRemove = 0.60),
                                             RemoveBraggDisksWithWeakInten(fractionToRemove = 0.65),
                                             RemoveBraggDisksWithWeakInten(fractionToRemove = 0.70),
-                                            #RemoveBraggDisksWithWeakInten(fractionToRemove = 0.75),
-                                            #RemoveBraggDisksWithWeakInten(fractionToRemove = 0.80),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.75),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.80),
                                             ])
 
     randomBraggDiskRemoval = v2.RandomChoice([
@@ -503,7 +409,7 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
     # random_choice_of_BraggDiskRemoval = v2.RandomChoice([weakBraggDiskRemoval, randomBraggDiskRemoval])
 
     random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
-    random_apply_ranDomBraggDiskRemoval = v2.RandomApply(transforms = [randomBraggDiskRemoval], p = 0.05)
+    random_apply_ranDomBraggDiskRemoval = v2.RandomApply(transforms = [randomBraggDiskRemoval], p = 0.10)
 
 
     
@@ -512,31 +418,32 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.02)
+                                                     fractionToAddBraggDisks = 0.03)
 
     addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.03)
+                                                     fractionToAddBraggDisks = 0.04)
 
     addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.04)
+                                                     fractionToAddBraggDisks = 0.05)
 
     
-    # addFalsePositives04 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-    #                                                  num_bins_polarAngle, 
-    #                                                  num_bins_braggintensity, 
-    #                                                  std_of_intensity = 1, 
-    #                                                  fractionToAddBraggDisks = 0.05)
+    addFalsePositives04 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+                                                     num_bins_polarAngle, 
+                                                     num_bins_braggintensity, 
+                                                     std_of_intensity = 1, 
+                                                     fractionToAddBraggDisks = 0.06)
 
     random_choice_of_falsePositiveAddition =  v2.RandomChoice([
                                                                 addFalsePositives01,
                                                                 addFalsePositives02,
                                                                 addFalsePositives03,
+                                                                addFalsePositives04,
                                                              ])
 
 
@@ -550,7 +457,6 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
     composed_transforms = v2.Compose([
                                     random_apply_weakBraggDiskRemoval,
                                     random_apply_ranDomBraggDiskRemoval,
-                                    random_apply_int_Assign,
                                     random_apply_int_Scaling,
                                     random_apply_Displace_R,
                                     random_apply_Displace_A,

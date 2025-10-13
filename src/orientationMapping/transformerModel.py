@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from embdding import EmbedLayer
+from orientationMapping.embdding import EmbedLayer
 import math
 from dataclasses import dataclass
 
@@ -15,7 +15,7 @@ class ModelConfig:
     d_ff: int
     # h is the number of attention head
     angle_bin_centers: torch.tensor
-    num_bins_braggintensity: int
+    intensity_bin_centers: torch.tensor
     num_bins_radialDistance: int
     device: torch.device
     num_feature: int
@@ -95,7 +95,7 @@ class Encoder(nn.Module):
         self.embed = EmbedLayer(
                                 self.d_embed,
                                 config.angle_bin_centers,
-                                config.num_bins_braggintensity,
+                                config.intensity_bin_centers,
                                 config.num_bins_radialDistance,
                                 config.device
                                 )

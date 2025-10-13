@@ -31,6 +31,11 @@ materials project (https://next-gen.materialsproject.org/).
 
 ### Descriptions for training neural networks models
 
+###### please make sure to make bash files in scripts directory executable by chmod +x 
+
+```bash
+./scripts/training_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
+```
 ---
 
 ### Descriptions of scripts for data generation and data analysis
@@ -67,7 +72,17 @@ materials project (https://next-gen.materialsproject.org/).
 
 #### How to predict orientations from experimental 4D-STEM diffraction patterns
 
+```bash
+./scripts/data_analyses_02_check_performance_of_orientationPrediction/DATA_ANALYSES_02_predict_orientations.sh
+```
 
+#### How to measure correlation between experimental Bragg disks and simulated Bragg disks from predicted orientation
+
+```bash
+./scripts/data_analyses_03_measure_correlation_between_experiments_and_predictions/DATA_ANALYSES_03_measure_correlation_between_prediction_and_experimental_data.sh
+```
+
+---
 
 ## Acknowledgments
 This project is supported by the Eric and Wendy Schmidt AI in Science Postdoctoral Fellowship, a program of Schmidt Sciences, LLC

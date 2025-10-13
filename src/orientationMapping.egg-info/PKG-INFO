@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: orientationMapping
+Version: 0.0.1
+Author-email: "Kwanghwi Je, Erik Thiede" <kj355@cornell.edu>
+License-File: LICENSE
+Requires-Dist: numpy>=2.0.1
+Requires-Dist: scikit-image>=0.25.0
+Requires-Dist: pandas
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: scipy>=1.15.2
+Dynamic: license-file

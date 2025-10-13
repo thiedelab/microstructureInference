@@ -7,20 +7,35 @@ Created on Wed May 21 14:50:43 2025
 """
 import numpy as np
 import torch
-from dataAugmentation import  custom_transforms_for_Data_Aug
+from orientationMapping.dataAugmentation import  custom_transforms_for_Data_Aug
 from torch.utils.data import DataLoader
 import os
 #import torchinfo
 from torch.utils.data.sampler import SubsetRandomSampler
-import dataModules as dM
-from transformerModel import ModelConfig, make_model
-from trainer import train
+from orientationMapping.dataModules import MyDatasetMultiTask
+from orientationMapping.transformerModel import ModelConfig, make_model
+from orientationMapping.trainer import train
 ###############################################################################
 ######## STEP 0. SET PARAMETERS
 
 seed = 22
 torch.manual_seed(seed)
 np.random.seed(seed)
+
+def load_checkpoint(model, optimizer, scheduler, checkpoint_path, device):
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
+    # Start from the next epoch
+    start_epoch = checkpoint['epoch'] + 1
+
+    # Resume scheduler with last_epoch as the last epoch in the checkpoint
+    scheduler.last_epoch = checkpoint['epoch']
+
+    return model, optimizer, scheduler, start_epoch
 
 file_path = os.getcwd() + "/"
 
@@ -115,11 +130,11 @@ val_transforms = transforms
 ############ Set dataset and dataloader that can be used as input of torch Dataset class.
 
 
-kwang_dataset_train = dM.MyDatasetMultiTask("./entire_Bradd_disks_padded_train.npy", "./orientation_canonical_labels_train.npy", "./entire_mirror_train.npy", num_bins_polarAngle,  transform = train_transforms)
-kwang_dataset_val = dM.MyDatasetMultiTask("./entire_Bradd_disks_padded_valid.npy", "./orientation_canonical_labels_valid.npy", "./entire_mirror_valid.npy", num_bins_polarAngle, transform = val_transforms)
+kwang_dataset_train = pPd.MyDatasetMultiTask("./entire_Bradd_disks_padded_train.npy", "./orientation_canonical_labels_train.npy", "./entire_mirror_train.npy", num_bins_polarAngle,  transform = train_transforms)
+kwang_dataset_val = pPd.MyDatasetMultiTask("./entire_Bradd_disks_padded_valid.npy", "./orientation_canonical_labels_valid.npy", "./entire_mirror_valid.npy", num_bins_polarAngle, transform = val_transforms)
 
-#kwang_dataset_train = dM.MyDataset(list_of_Bragg_disks_padded_train, labels_train, transform = None)
-#kwang_dataset_val = dM.MyDataset(list_of_Bragg_disks_padded_val, labels_val, transform = None)
+#kwang_dataset_train = pPd.MyDataset(list_of_Bragg_disks_padded_train, labels_train, transform = None)
+#kwang_dataset_val = pPd.MyDataset(list_of_Bragg_disks_padded_val, labels_val, transform = None)
 
 train_indices = np.arange(len(kwang_dataset_train))
 np.random.shuffle(train_indices)
@@ -150,8 +165,7 @@ config = ModelConfig(
                      d_embed = embed_dim,
                      d_ff = 2 * embed_dim,
                      angle_bin_centers = angle_bin_centers,
-                     num_bins_braggintensity = num_bins_braggintensity,
-                     # intensity_bin_centers = intensity_bin_centers,
+                     intensity_bin_centers = intensity_bin_centers,
                      num_bins_radialDistance = num_bins_radialDistance,
                      device = device,
                      num_feature = num_feature,
@@ -175,16 +189,19 @@ cos_decay_epoch = 300
 linear_warmup = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1 / num_warmup_epochs, end_factor=1.0, total_iters = num_warmup_epochs - 1, last_epoch=-1)
 cos_decay     = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max= cos_decay_epoch, eta_min=eta_min)
 
+checkpoint_path = './best_model_r1.pth'
+model, optimizer, scheduler, start_epoch = load_checkpoint(model, optimizer, cos_decay, checkpoint_path, device)
 # Initialize best validation loss
 
-file_path = "/tmp/kwang/biM02/"
+file_path_o = "/tmp/kwang/diM01/"
 
-train_error, valid_error = train(model, train_loader, val_loader, num_epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch,  device, file_path, PAD = PAD, start_epoch = 0)
+train_error, valid_error = train(model, train_loader, val_loader, num_epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch,  device, file_path_o, PAD = PAD, start_epoch = start_epoch)
+#train_error, valid_error = train(model, train_loader, val_loader, num_epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch,  device, file_path, PAD = PAD, start_epoch = 0)
 
-train_error = np.save(file_path + "train_error.npy", np.array(train_error))
-valid_error = np.save(file_path + "valid_error.npy", np.array(valid_error))
+train_error = np.save(file_path_o + "train_error.npy", np.array(train_error))
+valid_error = np.save(file_path_o + "valid_error.npy", np.array(valid_error))
 
 print("Hello world!")
 
-PATH = file_path + "supervisedReggresion_last.pt"
+PATH = file_path_o + "supervisedReggresion_last.pt"
 torch.save(model.state_dict(), PATH)
