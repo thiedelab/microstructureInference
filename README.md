@@ -33,9 +33,9 @@ materials project (https://next-gen.materialsproject.org/).
 
 ###### please make sure to make bash files in scripts directory executable by chmod +x 
 
-###### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels
-###### The "./scripts/data_generate_01_synthetic_training_data" directory contains scripts for generating synthetic training and validation data (see below)
+###### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels. The "./scripts/data_generate_01_synthetic_training_data" directory contains scripts for generating synthetic training and validation data (see below)
 
+###### To start training, please run the following bash file
 ```bash
 ./scripts/training_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
 ```
