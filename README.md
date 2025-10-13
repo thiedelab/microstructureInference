@@ -11,6 +11,18 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 - Modified version of py4DSTEM codes are in third_party directory
 - The original py4DSTEM project is available at: https://github.com/py4dstem/py4DSTEM
 
+## How to install
+##### First install project dependencies from pyproject.toml
+```bash
+python -m pip install .
+```
+Then install torch>=2.6.0 and torchvision>=0.23.0 with CUDA build.
+
+##### (optional) you can run the following command to install torch, torchvision, and cuda build
+```bash
+pip install -r requirements-cuda.txt
+```
+
 ---
 
 ### Crystal Structures Used

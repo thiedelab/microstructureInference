@@ -3,3 +3,5 @@ scikit-image>=0.25.0
 pandas
 pandas>=2.2.3
 scipy>=1.15.2
+torchinfo>=1.8.0
+tqdm>=4.67.1

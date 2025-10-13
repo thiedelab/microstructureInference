@@ -5,7 +5,6 @@ src/orientationMapping/LossFunctions.py
 src/orientationMapping/__init__.py
 src/orientationMapping/dataAugmentation.py
 src/orientationMapping/dataModules.py
-src/orientationMapping/embdding.py
 src/orientationMapping/trainer.py
 src/orientationMapping/transformerModel.py
 src/orientationMapping.egg-info/PKG-INFO

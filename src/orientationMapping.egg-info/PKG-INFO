@@ -8,4 +8,6 @@ Requires-Dist: scikit-image>=0.25.0
 Requires-Dist: pandas
 Requires-Dist: pandas>=2.2.3
 Requires-Dist: scipy>=1.15.2
+Requires-Dist: torchinfo>=1.8.0
+Requires-Dist: tqdm>=4.67.1
 Dynamic: license-file
