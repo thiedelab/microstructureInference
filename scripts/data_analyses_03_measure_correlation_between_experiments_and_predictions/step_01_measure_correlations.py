@@ -196,6 +196,24 @@ def main():
         py4DSTEMCorrScore_considerInten_py4DSTEM.append(orientation_py4D.corr[0])
         py4DSTEMCorrScore_considerInten_transformer.append(orientation_trans.corr[0])
 
+    py4DSTEM_predicted_rotation_matrices = np.array(py4DSTEM_predicted_rotation_matrices)
+    linearAssign_cost_dontconsiderInten_transformer = np.array(linearAssign_cost_dontconsiderInten_transformer)
+    linearAssign_cost_dontconsiderInten_py4DSTEM = np.array(linearAssign_cost_dontconsiderInten_py4DSTEM)
+    
+    py4DSTEMCorrScore_considerInten_py4DSTEM = np.array(py4DSTEMCorrScore_considerInten_py4DSTEM)
+    py4DSTEMCorrScore_considerInten_transformer = np.array(py4DSTEMCorrScore_considerInten_transformer)
+    
+    pyxemCorrScore_considerInten_py4DSTEM = np.array(pyxemCorrScore_considerInten_py4DSTEM)
+    pyxemCorrScore_considerInten_transformer = np.array(pyxemCorrScore_considerInten_transformer)
+
+    np.save('py4DSTEM_predicted_rotation_matrices_%d.npy'%(correlationThresholdTemplateMatch), py4DSTEM_predicted_rotation_matrices)
+    np.save('linearAssign_cost_dontconsiderInten_transformer_%d.npy'%(correlationThresholdTemplateMatch), linearAssign_cost_dontconsiderInten_transformer)
+    np.save('linearAssign_cost_dontconsiderInten_py4DSTEM_%d.npy'%(correlationThresholdTemplateMatch), linearAssign_cost_dontconsiderInten_py4DSTEM)
+    np.save('py4DSTEMCorrScore_considerInten_py4DSTEM_%d.npy'%(correlationThresholdTemplateMatch), py4DSTEMCorrScore_considerInten_py4DSTEM)
+    np.save('py4DSTEMCorrScore_considerInten_transformer_%d.npy'%(correlationThresholdTemplateMatch), py4DSTEMCorrScore_considerInten_transformer)
+    np.save('pyxemCorrScore_considerInten_py4DSTEM_%d.npy'%(correlationThresholdTemplateMatch), pyxemCorrScore_considerInten_py4DSTEM)
+    np.save('pyxemCorrScore_considerInten_transformer_%d.npy'%(correlationThresholdTemplateMatch), pyxemCorrScore_considerInten_transformer)
+
 
 
 
