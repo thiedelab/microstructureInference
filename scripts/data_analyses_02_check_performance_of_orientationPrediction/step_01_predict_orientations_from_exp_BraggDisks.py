@@ -88,15 +88,13 @@ def main():
      radial_bins, radial_bin_centers, \
      angle_bins, angle_bin_centers, \
      intensity_bins, intensity_bin_centers) = process_pandas_tabular_data(
-                                                        df, 
-                                                        num_bins_radialDistance, 
-                                                        num_bins_polarAngle, 
-                                                        num_bins_braggintensity, 
-                                                        max_sequence_length,
-                                                        min_radial_distance,
-                                                        max_radial_distance,
-                                                        min_braggIntensity,
-                                                        max_braggIntensity)
+                                                     df, 
+                                                     num_bins_radialDistance, 
+                                                     num_bins_polarAngle, 
+                                                     num_bins_braggintensity, 
+                                                     max_sequence_length,
+                                                     max_radial_distance,
+                                                     max_braggIntensity)
     
     
     

@@ -97,12 +97,10 @@ def main():
     
     intensity_bin_centers, angle_bin_centers = digitized_bin_centers(
                                                     num_bins_radialDistance,
-                                                    min_radial_distance,
                                                     max_radial_distance,
                                                     num_bins_polarAngle,
                                                     num_bins_braggintensity,
-                                                    min_braggIntensity,
-                                                    max_braggIntensity
+                                                    max_braggIntensity,
     )
     
     

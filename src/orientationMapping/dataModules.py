@@ -67,22 +67,22 @@ class MyDatasetMultiTask(Dataset):
 
 
 def digitized_bin_centers(num_bins_radialDistance,
-                          min_radial_distance,
                           max_radial_distance,
                           num_bins_polarAngle,
                           num_bins_braggintensity,
-                          min_braggIntensity,
-                          max_braggIntensity
+                          max_braggIntensity,
+                          radial_distance_tolerance = 0.0001,
+                          intensity_tolerance = 0.0001,
                           ):
     
-    radial_bins = np.linspace(0.0, max_radial_distance + (min_radial_distance*0.05), num_bins_radialDistance + 1)
+    radial_bins = np.linspace(0.0, max_radial_distance + (radial_distance_tolerance), num_bins_radialDistance + 1)
     radial_bin_centers = (radial_bins[:-1] + radial_bins[1:]) / 2
     
     angle_bins = np.arange(-np.pi - np.pi/360., np.pi + np.pi/360., np.pi/180.)
     angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
     angle_bins[-1] = np.pi + np.pi/360 # further change the last element
     
-    intensity_bins = np.linspace(0.0, max_braggIntensity + (min_braggIntensity*0.05), num_bins_braggintensity + 1)
+    intensity_bins = np.linspace(0.0, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
     intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
     
     

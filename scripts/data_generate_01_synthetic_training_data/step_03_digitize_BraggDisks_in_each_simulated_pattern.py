@@ -27,8 +27,8 @@ def process_pandas_tabular_data(
                                 num_bins_braggintensity, 
                                 max_sequence_length,
                                 max_radial_distance = 2.99000,
-                                min_radial_distance = 0.45844,
-                                min_braggIntensity = 0.004999,
+                                radial_distance_tolerance = 0.0001,
+                                intensity_tolerance = 0.0001,
                                 ):
     
     
@@ -51,28 +51,28 @@ def process_pandas_tabular_data(
     intensity_val_extended = np.hstack(intensity_val)
     
     # max_radial_distance = np.max(radial_distance_extended)
-    # min_radial_distance = np.min(radial_distance_extended)
+    # radial_distance_tolerance = np.min(radial_distance_extended)
     
     max_braggIntensity = np.max(intensity_val_extended)
-    # min_braggIntensity = np.min(intensity_val_extended)
+    # intensity_tolerance = np.min(intensity_val_extended)
     
     print("number_of_tokens_in_sequences", number_of_tokens_in_sequences)
     
     print("max_braggIntensity", max_braggIntensity)
-    print("min_braggIntensity", min_braggIntensity)
+    print("intensity_tolerance", intensity_tolerance)
     
     print("max_radial_distance", max_radial_distance)
-    print("min_radial_distance", min_radial_distance)
+    print("radial_distance_tolerance", radial_distance_tolerance)
     
     
-    radial_bins = np.linspace(0.0, max_radial_distance + (min_radial_distance*0.05), num_bins_radialDistance + 1)
+    radial_bins = np.linspace(0.0, max_radial_distance + (radial_distance_tolerance), num_bins_radialDistance + 1)
     radial_bin_centers = (radial_bins[:-1] + radial_bins[1:]) / 2
 
     angle_bins = np.arange(-np.pi - np.pi/360., np.pi + np.pi/360., np.pi/180.)
     angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
     angle_bins[-1] = np.pi + np.pi/360 # further change the last element
     
-    intensity_bins = np.linspace(0.0, max_braggIntensity + (min_braggIntensity*0.05), num_bins_braggintensity + 1)
+    intensity_bins = np.linspace(0.0, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
     intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
     
         

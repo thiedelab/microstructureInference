@@ -31,8 +31,8 @@ def parse_args():
     parser.add_argument("--crystal", type = str, help="nomenclature of crystal", default = "Cu_fcc")
     parser.add_argument("--directoryPath", type = str, help="path of directory where unit cell cif file is located", default = "./")
     parser.add_argument("--outOfPlaneAngleDisp", type=float, help="out of plane angle displacement used in py4DSTEM orientation plan", default = float(2))
-    parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.025))
-    parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(1e-3))
+    parser.add_argument("--excitError", type=float, help="excitation error used for simulations", default = float(0.04))
+    parser.add_argument("--intensThreshold", type=float, help="This threshold value is used to delete Bragg disks with a relative intensity smaller than it.", default = float(4e-3))
     parser.add_argument("--saveIntermediatePklFiles", type=int, help="whether to save intermediate pikcle files; can be helpful for debug.", default = 0)
     
     return parser.parse_args()
