@@ -13,9 +13,10 @@ import os
 import argparse
 #import torchinfo
 from torch.utils.data.sampler import SubsetRandomSampler
-from orientationMapping.dataModules import MyDatasetMultiTask
+from orientationMapping.dataModules import MyDatasetMultiTask, digitized_bin_centers
 from orientationMapping.transformerModel import ModelConfig, make_model
 from orientationMapping.trainer import train, load_checkpoint
+
 
 
 def parse_args():
@@ -95,26 +96,15 @@ def main():
     
     
     
-    
-    radial_bins = np.linspace(0.0, max_radial_distance + (min_radial_distance*0.05), num_bins_radialDistance + 1)
-    radial_bin_centers = (radial_bins[:-1] + radial_bins[1:]) / 2
-    
-    angle_bins = np.arange(-np.pi - np.pi/360., np.pi + np.pi/360., np.pi/180.)
-    angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
-    angle_bins[-1] = np.pi + np.pi/360 # further change the last element
-    
-    intensity_bins = np.linspace(0.0, max_braggIntensity + (min_braggIntensity*0.05), num_bins_braggintensity + 1)
-    intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
-    
-    
-    radial_bins = torch.tensor(radial_bins, dtype = torch.float32)
-    radial_bin_centers = torch.tensor(radial_bin_centers, dtype = torch.float32)
-    
-    angle_bins = torch.tensor(angle_bins, dtype = torch.float32)
-    angle_bin_centers = torch.tensor(angle_bin_centers, dtype = torch.float32)
-    
-    intensity_bins = torch.tensor(intensity_bins, dtype = torch.float32)
-    intensity_bin_centers = torch.tensor(intensity_bin_centers, dtype = torch.float32)
+    intensity_bin_centers, angle_bin_centers = digitized_bin_centers(
+                                                    num_bins_radialDistance,
+                                                    min_radial_distance,
+                                                    max_radial_distance,
+                                                    num_bins_polarAngle,
+                                                    num_bins_braggintensity,
+                                                    min_braggIntensity,
+                                                    max_braggIntensity
+    )
     
     
     transforms = custom_transforms_for_Data_Aug(
