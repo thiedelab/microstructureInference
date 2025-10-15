@@ -17,7 +17,9 @@ dependencies = [
 		"torchinfo>=1.8.0",
 		"tqdm>=4.67.1",
 
-		"emdfile>=0.0.16",    # library required for py4DSTEM
+		# Libraries below are required for
+		# importing and using py4DSTEM
+		"emdfile>=0.0.16",
 		"pymatgen>=2025.4.10",
 		"ncempy>=1.12",
 		"dask>=2025.3.0",
