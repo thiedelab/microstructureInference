@@ -9,5 +9,5 @@ conda activate py4DSTEM14.08-envforPlot
 
 echo "Training start"
 echo ""
-python rotationPrediction.py
+python rotationPrediction_transformer.py
 

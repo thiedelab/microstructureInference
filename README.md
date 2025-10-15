@@ -8,7 +8,7 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 
 ## License Notice
 - Licensed under the GNU General Public License v3.0
-- Modified version of py4DSTEM codes are in third_party directory
+- Modified version of py4DSTEM codes are in "third_party" directory
 - The original py4DSTEM project is available at: https://github.com/py4dstem/py4DSTEM
 
 ## How to install source codes
@@ -41,6 +41,26 @@ materials project (https://next-gen.materialsproject.org/).
 
 ---
 
+### How to load modified py4DSTEM library in "third_party" directory in a python script.
+
+###### Set absolute path of "third_party" directory
+```bash
+import os
+import sys
+third_party_path = os.path.abspath("/path/towards/third_party/")
+```
+###### Then, add searchpath via sys.path
+```bash
+sys.path.insert(0, third_party_path)
+```
+
+###### Now, you can load py4DSTEM library in "third_party" directory.
+```bash
+import py4DSTEM
+```
+
+---
+
 ### Descriptions for training neural networks models
 
 ###### please make sure to make bash files in scripts directory executable by chmod +x 
@@ -49,7 +69,7 @@ materials project (https://next-gen.materialsproject.org/).
 
 ###### To start training, please run the following bash file
 ```bash
-./scripts/training_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
+./scripts/train_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
 ```
 
 ###### Once trained, you can use the model to map experimental diffraction patterns to orientations of crystals. The "./scripts/data_analyses_02_check_performance_of_orientationPrediction" directory contains scripts for the mapping (see below)
