@@ -19,11 +19,11 @@ from modules_step_01_sample_orientation_thickness import action_07_generate_dict
 import time
 import argparse
 
-import sys
-import os
-current_dir = os.path.dirname(__file__)
-third_party_path = os.path.abspath(os.path.join(current_dir, '..', '..', 'third_party'))
-sys.path.insert(0, third_party_path)
+#import sys
+#import os
+#current_dir = os.path.dirname(__file__)
+#third_party_path = os.path.abspath(os.path.join(current_dir, '..', '..', 'third_party'))
+#sys.path.insert(0, third_party_path)
 import py4DSTEM
 
 def parse_args():
