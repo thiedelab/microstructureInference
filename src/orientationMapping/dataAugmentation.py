@@ -349,9 +349,7 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
                                     num_bins_polarAngle, 
                                     num_bins_braggintensity):
     
-    uniform_intScaling = uniformIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
     individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
-    random_choice_of_int_Scaling = v2.RandomChoice([uniform_intScaling, individ_intScaling])
     random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.80)
 
 
@@ -399,17 +397,7 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
                                             RemoveBraggDisksWithWeakInten(fractionToRemove = 0.80),
                                             ])
 
-    randomBraggDiskRemoval = v2.RandomChoice([
-                                                RandomRemoval(fractionToRemove = 0.05),
-                                                RandomRemoval(fractionToRemove = 0.10),
-                                                RandomRemoval(fractionToRemove = 0.15),
-                                                RandomRemoval(fractionToRemove = 0.20),
-                                                ])
-
-    # random_choice_of_BraggDiskRemoval = v2.RandomChoice([weakBraggDiskRemoval, randomBraggDiskRemoval])
-
-    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
-    random_apply_ranDomBraggDiskRemoval = v2.RandomApply(transforms = [randomBraggDiskRemoval], p = 0.10)
+    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.25)
 
 
     
@@ -418,45 +406,38 @@ def custom_transforms_for_Data_Aug(num_bins_radialDistance,
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.03)
+                                                     fractionToAddBraggDisks = 0.02)
 
     addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.04)
+                                                     fractionToAddBraggDisks = 0.03)
 
     addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
                                                      num_bins_polarAngle, 
                                                      num_bins_braggintensity, 
                                                      std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.05)
+                                                     fractionToAddBraggDisks = 0.04)
 
     
-    addFalsePositives04 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-                                                     num_bins_polarAngle, 
-                                                     num_bins_braggintensity, 
-                                                     std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.06)
 
     random_choice_of_falsePositiveAddition =  v2.RandomChoice([
                                                                 addFalsePositives01,
                                                                 addFalsePositives02,
                                                                 addFalsePositives03,
-                                                                addFalsePositives04,
                                                              ])
 
 
     random_apply_addFalsePositives = v2.RandomApply(
                         transforms = [random_choice_of_falsePositiveAddition], 
-                        p = 0.1
+                        p = 0.05
     )
     
     last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
     
     composed_transforms = v2.Compose([
                                     random_apply_weakBraggDiskRemoval,
-                                    random_apply_ranDomBraggDiskRemoval,
                                     random_apply_int_Scaling,
                                     random_apply_Displace_R,
                                     random_apply_Displace_A,
