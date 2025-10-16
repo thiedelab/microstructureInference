@@ -138,7 +138,7 @@ def pointGroup_map_rotation_prediction(predictions, target_rotation, point_group
     loss = rotation_prediction_loss
     return loss
 
-def pointGroup_map_rotation_and_phase_prediction(predictions, target_rotation, target_phase, point_group_op_matrices, weights = [0.75, 0.25]):
+def pointGroup_map_rotation_and_phase_prediction(predictions, target_rotation, target_phase, point_group_op_matrices, weights = [0.9, 0.1]):
     # print("point_group_op_matrices.device", point_group_op_matrices.device)
     # print("target_rotation.device", target_rotation.device)
     
