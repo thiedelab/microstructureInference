@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--max_radial_distance", type = float, help="maximum raidus", default = float(2.99000))
     parser.add_argument("--min_braggIntensity", type = float, help="minimum intensity", default = float(0.000999))    
     parser.add_argument("--max_braggIntensity", type = float, help="maximum intenisty", default = float(1.0))
+    parser.add_argument("--isMultitask", type = int, help="integer_indicating_multi_predictions", default = int(0))
     parser.add_argument("--num_bins_radialDistance", type = int, help="number of discretized bins for radius dimension", default = int(256))
     parser.add_argument("--num_bins_polarAngle", type = int, help="number of discretized bins for polar angle dimension", default = int(360))
     parser.add_argument("--num_bins_braggintensity", type = int, help="number of discretized bins for intensity dimension", default = int(256))
@@ -60,6 +61,7 @@ def main():
     
     min_braggIntensity = args.min_braggIntensity
     max_braggIntensity = args.max_braggIntensity
+    isMultitask = args.isMultitask
     
     seed = args.seed
     PAD = args.PAD
@@ -162,7 +164,8 @@ def main():
                          num_feature = 9,
                          N_encoder = 1,
                          max_seq_len = max_sequence_length,
-                         dropout = 0.005
+                         dropout = 0.005,
+                         multiTask = isMultitask,
                          )
     
     model = make_model(config)

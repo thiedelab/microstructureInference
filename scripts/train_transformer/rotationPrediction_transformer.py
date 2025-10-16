@@ -33,6 +33,8 @@ def parse_args():
     parser.add_argument("--seed", type = int, help="random number seed for numpy and torch", default = int(22))
     parser.add_argument("--PAD", type = int, help="integer indicating PAD token", default = int(0))
     parser.add_argument("--initial_run", type = bool, help="boolean variable indicating whether this training is the first training run", default = bool(True))
+    parser.add_argument("--isMultitask", type = int, help="integer_indicating_multi_predictions", default = int(0))
+    
     
     parser.add_argument("--num_warmup_epochs", type = int, help="number of epochs for linear warm up learning rate scheduler", default = int(15))
     parser.add_argument("--cos_decay_epoch", type = int, help="number of epochs for cosine decay learning rate scheduler", default = int(300))
@@ -62,6 +64,8 @@ def main():
     
     min_braggIntensity = args.min_braggIntensity
     max_braggIntensity = args.max_braggIntensity
+    
+    isMultitask = args.isMultitask
     
     seed = args.seed
     PAD = args.PAD
@@ -164,7 +168,8 @@ def main():
                          h = 8,
                          N_encoder = 3,
                          max_seq_len = max_sequence_length,
-                         dropout = 0.005
+                         dropout = 0.001,
+                         multiTask = isMultitask,
                          )
     
     model = make_model(config)

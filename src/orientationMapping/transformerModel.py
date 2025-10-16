@@ -22,6 +22,7 @@ class ModelConfig:
     N_encoder: int
     max_seq_len: int
     dropout: float
+    multiTask: int
 
 def make_model(config):
     model = Transformer(config, config.num_feature).to(config.device)
@@ -260,6 +261,7 @@ class Transformer(nn.Module):
     def __init__(self, config, num_feature):
         super().__init__()
         self.encoder = Encoder(config)
+        self.multiTask = config.multiTask
         self.MLP_head_0 = nn.Sequential(
             nn.Linear(config.d_embed, int(config.d_embed / 2)),
             # nn.LayerNorm(int(config.d_embed / 2)),
@@ -272,19 +274,21 @@ class Transformer(nn.Module):
             nn.GELU(),
             nn.Linear(int(config.d_embed / 8), num_feature)
         )
+                
+        if self.multiTask:
         
-        self.MLP_head_1 = nn.Sequential(
-            nn.Linear(config.d_embed, int(config.d_embed / 2)),
-            # nn.LayerNorm(int(config.d_embed / 2)),
-            nn.GELU(),
-            nn.Linear(int(config.d_embed / 2), int(config.d_embed / 4)),
-            # nn.LayerNorm(int(config.d_embed / 4)),
-            nn.GELU(),
-            nn.Linear(int(config.d_embed / 4), int(config.d_embed / 8)),
-            # nn.LayerNorm(int(config.d_embed / 8)),
-            nn.GELU(),
-            nn.Linear(int(config.d_embed / 8), 1)
-        )
+            self.MLP_head_1 = nn.Sequential(
+                nn.Linear(config.d_embed, int(config.d_embed / 2)),
+                # nn.LayerNorm(int(config.d_embed / 2)),
+                nn.GELU(),
+                nn.Linear(int(config.d_embed / 2), int(config.d_embed / 4)),
+                # nn.LayerNorm(int(config.d_embed / 4)),
+                nn.GELU(),
+                nn.Linear(int(config.d_embed / 4), int(config.d_embed / 8)),
+                # nn.LayerNorm(int(config.d_embed / 8)),
+                nn.GELU(),
+                nn.Linear(int(config.d_embed / 8), 1)
+            )
 
 
     def forward(self, x, pad_mask=None):
@@ -298,6 +302,8 @@ class Transformer(nn.Module):
             x_final = x / reshaped_mask_sum
         else:
             x_final = torch.mean(x,-2)
-
-
-        return  self.MLP_head_0(x_final), self.MLP_head_1(x_final)
+        
+        if self.multiTask:
+            return  self.MLP_head_0(x_final), self.MLP_head_1(x_final)
+        else:
+            return  self.MLP_head_0(x_final)
