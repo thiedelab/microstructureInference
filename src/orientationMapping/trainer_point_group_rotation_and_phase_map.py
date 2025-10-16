@@ -63,7 +63,7 @@ def train_epoch(model, dataloader, optimizer, device, point_group_op_matrices, P
         count += 1
         # report progress
         if idx>0 and idx%50 == 0:
-            pbar.set_description(f'train loss={loss.item():.4f}')
+            pbar.set_description(f'train loss={loss.item():.4f}, train_geo_loss={geo_error/count:.7f},  train_pha_loss={phase_prediction_error/count:.7f}')
     return np.mean(losses), geo_error/count, phase_prediction_error/count
 
 def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch, device, file_path, PAD = 0, start_epoch = 0, save_interval = 10, best_valid_loss = 1000.0):
