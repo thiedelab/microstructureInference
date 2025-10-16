@@ -542,6 +542,33 @@ class DataSetPointGroup_rotation(Dataset):
         return len(self.data)
 
 
+class DataSetPointGroup_rotation_and_phase(Dataset):
+    def __init__(self, input_file, rot_file, phase_file, angle_bin_center_num, transform=None):
+        self.data = np.load(input_file, mmap_mode='r')
+        self.target_rot = np.load(rot_file, mmap_mode='r')
+        self.target_phase = np.load(phase_file, mmap_mode='r')
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        y_rot = self.target_rot[index]
+        y_phase = self.target_phase[index]
+
+        # Convert numpy arrays to PyTorch tensors
+        x = torch.tensor(x, dtype=torch.int64)
+        y_rot = torch.tensor(y_rot, dtype=torch.float32)
+        y_phase = torch.tensor(y_phase, dtype=torch.float32)
+
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x, y_rot, y_phase
+
+    def __len__(self):
+        return len(self.data)
+
+
 def digitized_bin_centers(num_bins_radialDistance,
                           max_radial_distance,
                           num_bins_polarAngle,
