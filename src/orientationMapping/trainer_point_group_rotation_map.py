@@ -123,7 +123,7 @@ def evaluate(model, dataloader, device, point_group_op_matrices, PAD):
             pred = model(features, pad_mask)
             # reshaped_pred = pPd.symmetric_orthogonalization(pred)
 
-            loss, rotatLoss, mirrorLoss, predicted_rotation_matrix = pointGroup_map_rotation_prediction(pred, labels_r, point_group_op_matrices)
+            loss = pointGroup_map_rotation_prediction(pred, labels_r, point_group_op_matrices)
             loss = loss.to(device)
             
 
