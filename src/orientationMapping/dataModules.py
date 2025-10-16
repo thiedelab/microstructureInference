@@ -13,6 +13,457 @@ from torch.utils.data import Dataset
 import random
 from orientationMapping.dataAugmentation import applyMirrorOperation, applyMirrorLabels
 
+def cubic_proper_point_group_operations():
+
+    cubic_point_group_operations = []
+    
+    
+    # 1
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 2
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [1, 0, 0],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 3
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 4
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, -1, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 5
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [-1, 0, 0],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 6
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [0, 0, -1],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 7
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, -1, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 8
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [-1, 0, 0],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 9
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [0, 0, 1],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 10
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [1, 0, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 11
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [-1, 0, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 12
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 13
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [-1, 0, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 14
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 15
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [1, 0, 0],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 16
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [0, 0, -1],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 17
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [-1, 0, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 18
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [1, 0, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 19
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [-1, 0, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 20
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 21
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 22
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [-1, 0, 0],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 23
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [0, 0, -1],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 24
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [0, -1, 0],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 25
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [0, -1, 0],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 26
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [0, 1, 0],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 27
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [0, 1, 0],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 28
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, -1, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 29
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [1, 0, 0],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 30
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [0, 0, 1],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 31
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [0, 1, 0],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 32
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [0, 1, 0],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 33
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [0, -1, 0],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 34
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [0, -1, 0],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 35
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, -1, 0],
+            [0, 0, -1]    
+        ]
+    )
+    
+    # 36
+    cubic_point_group_operations.append(
+        [
+            [0, 0, -1],
+            [1, 0, 0],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 37
+    cubic_point_group_operations.append(
+        [
+            [0, 1, 0],
+            [0, 0, -1],
+            [-1, 0, 0]    
+        ]
+    )
+    
+    # 38
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 39
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 0, -1],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 40
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 0, -1],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 41
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 42
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]    
+        ]
+    )
+    
+    # 43
+    cubic_point_group_operations.append(
+        [
+            [0, 0, 1],
+            [-1, 0, 0],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 44
+    cubic_point_group_operations.append(
+        [
+            [0, -1, 0],
+            [0, 0, 1],
+            [1, 0, 0]    
+        ]
+    )
+    
+    # 45
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 0, -1],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 46
+    cubic_point_group_operations.append(
+        [
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0]    
+        ]
+    )
+    
+    # 47
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 0, 1],
+            [0, -1, 0]    
+        ]
+    )
+    
+    # 48
+    cubic_point_group_operations.append(
+        [
+            [-1, 0, 0],
+            [0, 0, -1],
+            [0, 1, 0]    
+        ]
+    )
+    
+    cubic_point_group_operations = np.array(cubic_point_group_operations)
+   
+    proper_cubic_point_group_operations = []
+
+    for idx,mat in enumerate(cubic_point_group_operations):
+        if np.linalg.det(mat) > 0.0:
+            proper_cubic_point_group_operations.append(mat)
+    
+    proper_cubic_point_group_operations = np.array(proper_cubic_point_group_operations)
+    proper_cubic_point_group_operations_pt = torch.from_numpy(proper_cubic_point_group_operations).float()    
+    
+    return proper_cubic_point_group_operations_pt
+    
+
 def digitize_radial_distance(radial_distances, radial_bins):
     return np.digitize(radial_distances, radial_bins) - 1
 

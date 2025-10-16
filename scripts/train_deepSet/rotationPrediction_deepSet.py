@@ -16,7 +16,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from orientationMapping.dataModules import MyDatasetMultiTask, digitized_bin_centers
 # from orientationMapping.transformerModel import ModelConfig, make_model
 from orientationMapping.deepSetModel import ModelConfig, make_model
-from orientationMapping.trainer import train, load_checkpoint
+from orientationMapping.trainer_binary_map import train, load_checkpoint
 
 
 def parse_args():
