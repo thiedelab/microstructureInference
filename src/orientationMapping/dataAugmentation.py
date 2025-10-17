@@ -519,38 +519,38 @@ def custom_transforms_for_Data_Aug(
 
 
     
-    #### ADD FALSE POSITIVES transforms
-    addFalsePositives01 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-                                                     num_bins_polarAngle, 
-                                                     num_bins_braggintensity, 
-                                                     std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.02)
+    # #### ADD FALSE POSITIVES transforms
+    # addFalsePositives01 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+    #                                                  num_bins_polarAngle, 
+    #                                                  num_bins_braggintensity, 
+    #                                                  std_of_intensity = 1, 
+    #                                                  fractionToAddBraggDisks = 0.02)
 
-    addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-                                                     num_bins_polarAngle, 
-                                                     num_bins_braggintensity, 
-                                                     std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.03)
+    # addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+    #                                                  num_bins_polarAngle, 
+    #                                                  num_bins_braggintensity, 
+    #                                                  std_of_intensity = 1, 
+    #                                                  fractionToAddBraggDisks = 0.03)
 
-    addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-                                                     num_bins_polarAngle, 
-                                                     num_bins_braggintensity, 
-                                                     std_of_intensity = 1, 
-                                                     fractionToAddBraggDisks = 0.04)
+    # addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+    #                                                  num_bins_polarAngle, 
+    #                                                  num_bins_braggintensity, 
+    #                                                  std_of_intensity = 1, 
+    #                                                  fractionToAddBraggDisks = 0.04)
 
     
 
-    random_choice_of_falsePositiveAddition =  v2.RandomChoice([
-                                                                addFalsePositives01,
-                                                                addFalsePositives02,
-                                                                addFalsePositives03,
-                                                             ])
+    # random_choice_of_falsePositiveAddition =  v2.RandomChoice([
+    #                                                             addFalsePositives01,
+    #                                                             addFalsePositives02,
+    #                                                             addFalsePositives03,
+    #                                                          ])
 
 
-    random_apply_addFalsePositives = v2.RandomApply(
-                        transforms = [random_choice_of_falsePositiveAddition], 
-                        p = 0.05
-    )
+    # random_apply_addFalsePositives = v2.RandomApply(
+    #                     transforms = [random_choice_of_falsePositiveAddition], 
+    #                     p = 0.05
+    # )
     
     last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
     
