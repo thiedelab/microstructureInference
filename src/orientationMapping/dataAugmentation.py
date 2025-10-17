@@ -561,7 +561,7 @@ def custom_transforms_for_Data_Aug(
                                     random_apply_Displace_A,
                                     random_apply_Displace_C,
                                     random_apply_Displace_I,
-                                    random_apply_addFalsePositives,
+                                    # random_apply_addFalsePositives,
                                     last_normalization_of_intensity,
                                     ])
     
