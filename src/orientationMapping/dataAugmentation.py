@@ -614,23 +614,23 @@ def custom_transforms_for_Data_Aug_no_removal(
     random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
 
 
-    #### REMOVE BRAGG DISKS transforms
-    weakBraggDiskRemoval = v2.RandomChoice([
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.05),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.10),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.15),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.20),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.25),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.30),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.35),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.40),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.45),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.50),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.55),
-                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.60),
-                                            ])
+    # #### REMOVE BRAGG DISKS transforms
+    # weakBraggDiskRemoval = v2.RandomChoice([
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.05),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.10),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.15),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.20),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.25),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.30),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.35),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.40),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.45),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.50),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.55),
+    #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.60),
+    #                                         ])
 
-    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
+    # random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
 
 
     
