@@ -598,4 +598,4 @@ def digitized_bin_centers(num_bins_radialDistance,
     intensity_bins = torch.tensor(intensity_bins, dtype = torch.float32)
     intensity_bin_centers = torch.tensor(intensity_bin_centers, dtype = torch.float32)
     
-    return intensity_bin_centers, angle_bin_centers
+    return radial_bins, radial_bin_centers, angle_bins, angle_bin_centers, intensity_bin_centers
