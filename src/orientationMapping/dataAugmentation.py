@@ -566,3 +566,118 @@ def custom_transforms_for_Data_Aug(
                                     ])
     
     return composed_transforms
+
+
+def custom_transforms_for_Data_Aug_no_removal(
+                                    num_bins_radialDistance, 
+                                    num_bins_polarAngle, 
+                                    num_bins_braggintensity,
+                                    radial_bins,
+                                    radial_bin_centers,
+                                    angle_bins,
+                                    angle_bin_centers,
+                                    ):
+    
+    individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
+    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.80)
+
+
+    Displace_R = displaceFeature_GaussianNoise(feature_axis = 0, 
+                                                 feature_maxBinIdx = num_bins_radialDistance, 
+                                                 mean = 0.0, 
+                                                 std = 1.6, 
+                                                 )
+
+    Displace_A = displaceFeature_GaussianNoise_polar(feature_axis = 1, 
+                                                 feature_maxBinIdx = num_bins_polarAngle, 
+                                                 mean = 0.0, 
+                                                 std = 1.2, 
+                                                 )
+
+    Displace_I = displaceFeature_GaussianNoise(feature_axis = 2, 
+                                                 feature_maxBinIdx = num_bins_braggintensity, 
+                                                 mean = 0.0, 
+                                                 std = 18, 
+                                                 fractionToAddNoise = 0.90,
+                                                 min_clamp_index = 1)
+    
+    Displace_Cart = displaceCartesian_GaussianNoise(
+                                axis_r_bins = radial_bins,
+                                axis_r_bin_centers = radial_bin_centers,
+                                axis_angle_bins = angle_bins,               
+                                axis_angle_bin_centers = angle_bin_centers,
+    )
+    
+    random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.5)
+    random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.5)
+    random_apply_Displace_C =  v2.RandomApply(transforms = [Displace_Cart], p = 0.5)
+    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
+
+
+    #### REMOVE BRAGG DISKS transforms
+    weakBraggDiskRemoval = v2.RandomChoice([
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.05),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.10),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.15),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.20),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.25),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.30),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.35),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.40),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.45),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.50),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.55),
+                                            RemoveBraggDisksWithWeakInten(fractionToRemove = 0.60),
+                                            ])
+
+    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
+
+
+    
+    #### ADD FALSE POSITIVES transforms
+    addFalsePositives01 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+                                                     num_bins_polarAngle, 
+                                                     num_bins_braggintensity, 
+                                                     std_of_intensity = 1, 
+                                                     fractionToAddBraggDisks = 0.02)
+
+    addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+                                                     num_bins_polarAngle, 
+                                                     num_bins_braggintensity, 
+                                                     std_of_intensity = 1, 
+                                                     fractionToAddBraggDisks = 0.03)
+
+    addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
+                                                     num_bins_polarAngle, 
+                                                     num_bins_braggintensity, 
+                                                     std_of_intensity = 1, 
+                                                     fractionToAddBraggDisks = 0.04)
+
+    
+
+    random_choice_of_falsePositiveAddition =  v2.RandomChoice([
+                                                                addFalsePositives01,
+                                                                addFalsePositives02,
+                                                                addFalsePositives03,
+                                                             ])
+
+
+    random_apply_addFalsePositives = v2.RandomApply(
+                        transforms = [random_choice_of_falsePositiveAddition], 
+                        p = 0.05
+    )
+    
+    last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
+    
+    composed_transforms = v2.Compose([
+                                    # random_apply_weakBraggDiskRemoval,
+                                    random_apply_int_Scaling,
+                                    random_apply_Displace_R,
+                                    random_apply_Displace_A,
+                                    random_apply_Displace_C,
+                                    random_apply_Displace_I,
+                                    random_apply_addFalsePositives,
+                                    last_normalization_of_intensity,
+                                    ])
+    
+    return composed_transforms
