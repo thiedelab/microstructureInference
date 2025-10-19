@@ -59,7 +59,7 @@ class absolutePositionEmbedding(nn.Module):
         return pos_embedding.reshape(pos_embedding.shape[1], pos_embedding.shape[2])          # return shape N, E
 
 class directioPositionEmbedding_A(nn.Module):
-    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 15):
+    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 17):
         super().__init__()
         # k = int( (num_trainableVec - 1) / 2). If num_trainableVec == 9, k = ((9 - 1) / 2) = 4
         self.embed_dim  = embed_dim
