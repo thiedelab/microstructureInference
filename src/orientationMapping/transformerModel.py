@@ -70,6 +70,7 @@ class directioPositionEmbedding_A(nn.Module):
         self.pos_embedding_learnable_sine = nn.Parameter(torch.zeros(int((num_trainableVec - 1) / 2), embed_dim), requires_grad=True)      # k, E Learnable Positional Embedding
         self.torch_cosine_angle_library = self.torch_cosine_angle_library.to(device = device)
         self.torch_sine_angle_library = self.torch_sine_angle_library.to(device = device)
+        self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
 
     def generate_directional_library(self, angle_bin_centers):
         torch_cosine_angle_library = []
@@ -85,7 +86,7 @@ class directioPositionEmbedding_A(nn.Module):
         ### x: B * S where B is number of batch S is number of sequence
         cosSliced = self.torch_cosine_angle_library[x]                                      ## B * S, k 
         sinSliced = self.torch_sine_angle_library[x]                                        ## B * S, k 
-        return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine) + self.pos_embedding_learnable_bias # B * S, E
+        return ((torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)) / self.normalization_factor) + self.pos_embedding_learnable_bias # B * S, E
 
 class directioPositionEmbedding_I(nn.Module):
     def __init__(self, intensity_bin_centers, embed_dim, device, num_trainableVec = 9):
@@ -99,6 +100,7 @@ class directioPositionEmbedding_I(nn.Module):
         self.pos_embedding_learnable_sine = nn.Parameter(torch.zeros(int((num_trainableVec - 1) / 2), embed_dim), requires_grad=True)      # k, E Learnable Positional Embedding
         self.torch_cosine_angle_library = self.torch_cosine_angle_library.to(device = device)
         self.torch_sine_angle_library = self.torch_sine_angle_library.to(device = device)
+        self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
 
     def generate_directional_library(self, intensity_bin_centers):
         torch_cosine_angle_library = []
@@ -115,7 +117,7 @@ class directioPositionEmbedding_I(nn.Module):
 
         cosSliced = self.torch_cosine_angle_library[x]                                      ## B * S, k 
         sinSliced = self.torch_sine_angle_library[x]                                        ## B * S, k 
-        return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine) + self.pos_embedding_learnable_bias # B * S, E
+        return ((torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)) / self.normalization_factor) + self.pos_embedding_learnable_bias # B * S, E
 
 
         # self.register_buffer("pos_embedding", pos_embedding)                        # Register_buffer for easy switching of device
