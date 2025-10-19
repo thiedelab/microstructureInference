@@ -131,8 +131,8 @@ class EmbedLayer(nn.Module):
         # self.cls_token     = nn.Parameter(torch.zeros(1, 1, embed_dim), requires_grad=True)                     # Classification Token
         self.dropout       = nn.Dropout(dropout)
         
-        self.A_scale = nn.Parameter(torch.tensor(1.0))
-        self.I_scale = nn.Parameter(torch.tensor(1.0))
+        # self.A_scale = nn.Parameter(torch.tensor(1.0))
+        # self.I_scale = nn.Parameter(torch.tensor(1.0))
         self.layer_norm = nn.LayerNorm(embed_dim)
 
         # nn.init.trunc_normal_(self.conv1.weight, mean=0.0, std=0.02)
@@ -149,8 +149,8 @@ class EmbedLayer(nn.Module):
         x_r = x.reshape(B * S, x.shape[2])                                         # x : B * S, 3
         
         R_embedding = self.R_embedding.pos_embedding[x_r[:, 0]]                    # R_embdding: B * S, E
-        A_embedding = self.A_embedding(x_r[:, 1]) * self.A_scale                                # A_embdding: B * S, E
-        I_embedding = self.I_embedding(x_r[:, 2]) * self.I_scale                                # I_embdding: B * S, E
+        A_embedding = self.A_embedding(x_r[:, 1])                                # A_embdding: B * S, E
+        I_embedding = self.I_embedding(x_r[:, 2])                                # I_embdding: B * S, E
 
         x_r = R_embedding + A_embedding + I_embedding                              # B * S, E
         x_r = self.layer_norm(x_r)
