@@ -59,7 +59,7 @@ class absolutePositionEmbedding(nn.Module):
         return pos_embedding.reshape(pos_embedding.shape[1], pos_embedding.shape[2])          # return shape N, E
 
 class directioPositionEmbedding_A(nn.Module):
-    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 11):
+    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 15):
         super().__init__()
         # k = int( (num_trainableVec - 1) / 2). If num_trainableVec == 9, k = ((9 - 1) / 2) = 4
         self.embed_dim  = embed_dim
@@ -70,7 +70,7 @@ class directioPositionEmbedding_A(nn.Module):
         self.pos_embedding_learnable_sine = nn.Parameter(torch.zeros(int((num_trainableVec - 1) / 2), embed_dim), requires_grad=True)      # k, E Learnable Positional Embedding
         self.torch_cosine_angle_library = self.torch_cosine_angle_library.to(device = device)
         self.torch_sine_angle_library = self.torch_sine_angle_library.to(device = device)
-        self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
+        # self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
 
     def generate_directional_library(self, angle_bin_centers):
         torch_cosine_angle_library = []
@@ -86,7 +86,7 @@ class directioPositionEmbedding_A(nn.Module):
         ### x: B * S where B is number of batch S is number of sequence
         cosSliced = self.torch_cosine_angle_library[x]                                      ## B * S, k 
         sinSliced = self.torch_sine_angle_library[x]                                        ## B * S, k 
-        return ((torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)) / self.normalization_factor) + self.pos_embedding_learnable_bias # B * S, E
+        return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)+ self.pos_embedding_learnable_bias # B * S, E
 
 class directioPositionEmbedding_I(nn.Module):
     def __init__(self, intensity_bin_centers, embed_dim, device, num_trainableVec = 9):
@@ -100,7 +100,7 @@ class directioPositionEmbedding_I(nn.Module):
         self.pos_embedding_learnable_sine = nn.Parameter(torch.zeros(int((num_trainableVec - 1) / 2), embed_dim), requires_grad=True)      # k, E Learnable Positional Embedding
         self.torch_cosine_angle_library = self.torch_cosine_angle_library.to(device = device)
         self.torch_sine_angle_library = self.torch_sine_angle_library.to(device = device)
-        self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
+        # self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
 
     def generate_directional_library(self, intensity_bin_centers):
         torch_cosine_angle_library = []
@@ -117,7 +117,7 @@ class directioPositionEmbedding_I(nn.Module):
 
         cosSliced = self.torch_cosine_angle_library[x]                                      ## B * S, k 
         sinSliced = self.torch_sine_angle_library[x]                                        ## B * S, k 
-        return ((torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)) / self.normalization_factor) + self.pos_embedding_learnable_bias # B * S, E
+        return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)+ self.pos_embedding_learnable_bias # B * S, E
 
 
         # self.register_buffer("pos_embedding", pos_embedding)                        # Register_buffer for easy switching of device
@@ -130,6 +130,10 @@ class EmbedLayer(nn.Module):
         self.I_embedding = directioPositionEmbedding_I(intensity_bin_centers, embed_dim, device)                            # directional positional embedding
         # self.cls_token     = nn.Parameter(torch.zeros(1, 1, embed_dim), requires_grad=True)                     # Classification Token
         self.dropout       = nn.Dropout(dropout)
+        
+        self.A_scale = nn.Parameter(torch.tensor(1.0))
+        self.I_scale = nn.Parameter(torch.tensor(1.0))
+        self.layer_norm = nn.LayerNorm(embed_dim)
 
         # nn.init.trunc_normal_(self.conv1.weight, mean=0.0, std=0.02)
         # nn.init.constant_(self.conv1.bias, 0)
@@ -145,10 +149,11 @@ class EmbedLayer(nn.Module):
         x_r = x.reshape(B * S, x.shape[2])                                         # x : B * S, 3
         
         R_embedding = self.R_embedding.pos_embedding[x_r[:, 0]]                    # R_embdding: B * S, E
-        A_embedding = self.A_embedding(x_r[:, 1])                                # A_embdding: B * S, E
-        I_embedding = self.I_embedding(x_r[:, 2])                                # I_embdding: B * S, E
+        A_embedding = self.A_embedding(x_r[:, 1]) * self.A_scale                                # A_embdding: B * S, E
+        I_embedding = self.I_embedding(x_r[:, 2]) * self.I_scale                                # I_embdding: B * S, E
 
         x_r = R_embedding + A_embedding + I_embedding                              # B * S, E
+        x_r = self.layer_norm(x_r)
         x_r = x_r.reshape(B, S, R_embedding.shape[1])                                # x : B, S, E
 
 
