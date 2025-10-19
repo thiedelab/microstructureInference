@@ -128,12 +128,12 @@ class EmbedLayer(nn.Module):
         self.R_embedding = absolutePositionEmbedding(num_bins_radialDistance, embed_dim)                      # 1D Sinusoidal Positional Embedding
         self.A_embedding = directioPositionEmbedding_A(angle_bin_centers, embed_dim, device)                            # directional positional embedding
         self.I_embedding = directioPositionEmbedding_I(intensity_bin_centers, embed_dim, device)                            # directional positional embedding
-        # self.cls_token     = nn.Parameter(torch.zeros(1, 1, embed_dim), requires_grad=True)                     # Classification Token
+        self.layer_norm = nn.LayerNorm(embed_dim)
         self.dropout       = nn.Dropout(dropout)
         
         # self.A_scale = nn.Parameter(torch.tensor(1.0))
         # self.I_scale = nn.Parameter(torch.tensor(1.0))
-        self.layer_norm = nn.LayerNorm(embed_dim)
+        
 
         # nn.init.trunc_normal_(self.conv1.weight, mean=0.0, std=0.02)
         # nn.init.constant_(self.conv1.bias, 0)
@@ -153,8 +153,8 @@ class EmbedLayer(nn.Module):
         I_embedding = self.I_embedding(x_r[:, 2])                                # I_embdding: B * S, E
 
         x_r = R_embedding + A_embedding + I_embedding                              # B * S, E
-        x_r = self.layer_norm(x_r)
         x_r = x_r.reshape(B, S, R_embedding.shape[1])                                # x : B, S, E
+        x_r = self.layer_norm(x_r)
 
 
         x_r = self.dropout(x_r)
