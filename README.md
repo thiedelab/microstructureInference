@@ -33,7 +33,6 @@ The unit cell cif files used in this study are based on entries from the Inorgan
 |:--------------------:|:----------------:|:-------------------:|:-----------------------------:|:-----------------------------:|
 | ICSD #136042         |    Cu            |     F m -3 m        |            225                |           'Cu_fcc'            |
 | ICSD #63281          | Cu<sub>2</sub>O  |     P n -3 m Z      |            224                |           'Cu2O_cubic'        |
-| ICSD #67850          |   CuO            |     c 1 2/c 1       |            15                 |           'CuO_monoclinic'    |
 
 
 Due to licensing restrictions, cif files are not included. Users with access to the ICSD can retrieve the data via these entry numbers.
@@ -95,7 +94,7 @@ import py4DSTEM
 ###### step 01. We first sample background signals from experimental 4D-STEM data and make synthetic scanspace filled with crystal grains.
 ###### step 02. Thereafter, we randomly sample orienations
 ###### step 03,04. 
-###### Using orientations and sampled background signals, we simulated diffraction patterns and assign it to each scan space pixel. step 03 generate synthetic 4DSTEM data for single Cu fcc crystal. step 04 generate synthetic 4DSTEM data for 3 crystals; Cu fcc, Cu2O cubic, CuO monoclinic crystals.
+###### Using orientations and sampled background signals, we simulated diffraction patterns and assign it to each scan space pixel. step 03 generate synthetic 4DSTEM data for single Cu fcc crystal. step 04 generate synthetic 4DSTEM data for 3 crystals; Cu fcc and Cu2O cubic crystals.
 ```bash
 ./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
 ```
