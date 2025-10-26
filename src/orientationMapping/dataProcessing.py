@@ -467,3 +467,223 @@ def generate_2D_IMG_array(qx,
         diff2D_img = np.roll(diff2D_img, (-int(pixel_numbers / 2), -int(pixel_numbers / 2)), axis=(0, 1))
 
     return diff2D_img
+
+
+
+
+def make_orientation_map_based_on_4D_rotation_matrices(
+                                                        rotation_matrices_4D,
+                                                        crystal,
+                                                        match_ind = 0,
+                                                        num_matches_return = 1,
+                                                        correlation_thr = 100.,
+                                                        ):
+    """
+    Generates an orientation map based on 4D rotation matrices.
+
+    The function processes a 4D array of rotation matrices and constructs an 
+    orientation map for a scan space. Each element in the scan space corresponds 
+    to a 3x3 rotation matrix that describes the orientation of a crystal at that 
+    pixel. The map is populated with orientation information, including matrix 
+    values, correlation scores, and mirroring flags.
+
+    Parameters:
+    -----------
+    rotation_matrices_4D : numpy.ndarray
+        A 4D numpy array of shape (S_x, S_y, 3, 3) containing rotation matrices 
+        for each pixel in the scan space. Each matrix is a 3x3 rotation matrix 
+        associated with a specific pixel location in the scan space.
+        
+        - S_x: Number of pixels along the x-axis (scan space axis 0 dimension).
+        - S_y: Number of pixels along the y-axis (scan space axis 1 dimension).
+    
+    crystal : Crystal
+        A `Crystal` object that contains crystal symmetry operations and methods 
+        for orientation reduction. The `crystal` object is used to apply symmetry 
+        reductions to the calculated orientations, ensuring that the orientations 
+        are consistent with the crystal's symmetry group.
+        
+        The `crystal` object must have a method `symmetry_reduce_directions(orientation, match_ind)` 
+        which reduces the orientation matrix by applying the crystal's symmetries, 
+        ensuring that the orientation is physically valid according to the crystal's 
+        symmetry operations (e.g., rotation, reflection).
+        
+    match_ind : int, optional, default=0
+        Index indicating which match (orientation solution) to store in the 
+        `Orientation` object. The default value is 0, which corresponds to 
+        the first match.
+
+    num_matches_return : int, optional, default=1
+        The number of orientation matches to be returned and stored for each 
+        pixel. Typically set to 1, but can be adjusted if multiple orientations 
+        need to be tracked.
+
+    Returns:
+    --------
+    new_orientation_map : OrientationMap
+        An `OrientationMap` object containing the orientation data for the entire 
+        scan space, including the 3x3 rotation matrices, correlation values, and 
+        mirror flags for each pixel.
+    """
+    
+    from py4DSTEM.process.diffraction.utils import OrientationMap, Orientation
+
+    scan_space_dimension_x = rotation_matrices_4D.shape[0]
+    scan_space_dimension_y = rotation_matrices_4D.shape[1]
+
+    new_orientation_map = OrientationMap(
+                                        num_x=scan_space_dimension_x,
+                                        num_y=scan_space_dimension_y,
+                                        num_matches=1,
+    )
+
+    for i in range(scan_space_dimension_x):
+        for j in range(scan_space_dimension_y):
+            if np.sum(np.abs(rotation_matrices_4D[i, j])) > 0.0:
+                new_orientation = Orientation(num_matches=num_matches_return)
+                new_orientation.matrix[match_ind] = rotation_matrices_4D[i, j]
+
+                #######
+                new_orientation.corr[match_ind] = correlation_thr # Set correlation value high such that crystal.plot_orientation_maps module can plot it.
+                #######
+    
+                if np.sum(new_orientation.matrix[match_ind][:,2]) < 0.0:
+                    new_orientation.mirror[match_ind] = True
+                else:
+                    new_orientation.mirror[match_ind] = False
+                    
+            else:
+                new_orientation = Orientation(num_matches=num_matches_return)
+                new_orientation.matrix[match_ind] = np.zeros((3,3))
+                new_orientation.corr[match_ind] = 0.
+                new_orientation.mirror[match_ind] = False
+    
+            new_orientation = crystal.symmetry_reduce_directions(
+                        new_orientation,
+                        match_ind=match_ind,
+                    )
+    
+            # if np.sum(np.abs(new_orientation.matrix)) > 0.0:
+            #     print("###############################################")
+            #     print("xind, ying", i, j)
+            #     print("new_orientation_map.matrix\n", new_orientation.matrix, "\n")
+            #     print("new_orientation_map.family\n", new_orientation.family, "\n")
+            #     print("new_orientation_map.mirror\n", new_orientation.mirror, "\n")
+    
+            new_orientation_map.set_orientation(new_orientation, i, j)
+
+    return new_orientation_map
+
+
+
+def so3_correlation_map(R_field):
+    """
+    Compute 2D autocorrelation map for an SO(3) rotation field using cos(geodesic_distance).
+    
+    Parameters
+    ----------
+    R_field : ndarray, shape (H, W, 3, 3)
+        Field of rotation matrices (each pixel is a 3x3 SO(3) rotation).
+        
+    Returns
+    -------
+    corr_map : ndarray, shape (2H-1, 2W-1)
+        Correlation map, where corr_map[H-1+di, W-1+dj] is correlation at offset (di, dj).
+    """
+    H, W, _, _ = R_field.shape
+    corr_map = np.zeros((2*H - 1, 2*W - 1), dtype=np.float64)
+    
+    # Compute traces for all pairwise dot products R_ij^T * R_i'j'
+    R_flat = R_field.reshape(H*W, 3, 3)
+    trace_mat = np.einsum('nki,mki->nm', R_flat, R_flat)
+    trace_4d = trace_mat.reshape(H, W, H, W)
+
+    # Vectorized offset correlation using strided windows
+    for di in range(-H+1, H):
+        for dj in range(-W+1, W):
+            i1 = slice(max(0, -di), min(H, H - di))
+            j1 = slice(max(0, -dj), min(W, W - dj))
+            i2 = slice(max(0, di), min(H, H + di))
+            j2 = slice(max(0, dj), min(W, W + dj))
+            traces = trace_4d[i1, j1, i2, j2]
+            corr_map[H-1+di, W-1+dj] = ((traces - 1)/2).mean()
+    return corr_map
+
+
+def calculate_correlation_function_btw_DPs_vectorized(
+    data_flattened,
+    real_space_grain_index,
+    delta_max,
+    ax0_Lbound,
+    ax0_Ubound,
+    ax1_Lbound,
+    ax1_Ubound,
+    index_of_crystal=1
+):
+    """
+    Vectorized computation of the connected two-point correlation function between
+    normalized diffraction patterns in a selected real-space region of 4D-STEM data.
+    
+    Parameters
+    ----------
+    data_flattened : ndarray, shape (H, W, P)
+        Flattened diffraction pattern at each scan point.
+        P = 128*128 = number of pixels per diffraction pattern.
+    real_space_grain_index : ndarray, shape (H, W)
+        Integer labels for grains (or background) at each scan pixel.
+    delta_max : int
+        Maximum offset to compute the correlation function.
+    ax*_bound : int
+        Bounds of the real-space subregion to analyze.
+    index_of_crystal : int
+        Grain index for which to compute correlations.
+    
+    Returns
+    -------
+    corr_map : ndarray, shape (2*delta_max+1, 2*delta_max+1)
+        Two-point correlation function as a function of offset (Δx, Δy).
+    """
+
+    # --- Step 1. Extract region of interest
+    data_flat = np.copy(data_flattened[ax0_Lbound:ax0_Ubound, ax1_Lbound:ax1_Ubound])
+    grain_idx = np.copy(real_space_grain_index[ax0_Lbound:ax0_Ubound, ax1_Lbound:ax1_Ubound])
+    mask = (grain_idx == index_of_crystal)
+
+    H, W, P = data_flat.shape
+    corr_map = np.zeros((2 * delta_max + 1, 2 * delta_max + 1), dtype=np.float64)
+
+    # --- Step 2. Normalize each diffraction pattern to unit length
+    norms = np.linalg.norm(data_flat, axis=-1, keepdims=True)
+    data_norm = np.divide(data_flat, norms, out=np.zeros_like(data_flat), where=norms > 0)
+
+    # --- Step 3. For each spatial offset, compute correlation in a vectorized way
+    for dxi, dx in enumerate(range(-delta_max, delta_max + 1)):
+        for dyi, dy in enumerate(range(-delta_max, delta_max + 1)):
+
+            # Slices for overlapping region
+            i1 = slice(max(0, -dx), min(H, H - dx))
+            i2 = slice(max(0, dx), min(H, H + dx))
+            j1 = slice(max(0, -dy), min(W, W - dy))
+            j2 = slice(max(0, dy), min(W, W + dy))
+
+            # Masks for valid grain pixels
+            mask1 = mask[i1, j1]
+            mask2 = mask[i2, j2]
+            valid = mask1 & mask2
+            if not np.any(valid):
+                # corr_map[dxi, dyi] = np.nan
+                corr_map[dxi, dyi] = 0.0
+                continue
+
+            # Select normalized diffraction patterns
+            A = data_norm[i1, j1][valid]
+            B = data_norm[i2, j2][valid]
+
+            # --- Two-point correlation function
+            # ⟨A·B⟩ - ⟨A⟩·⟨B⟩
+            dot_mean = np.mean(np.sum(A * B, axis=1))
+            meanA = np.mean(A, axis=0)
+            meanB = np.mean(B, axis=0)
+            corr_map[dxi, dyi] = dot_mean - np.dot(meanA, meanB)
+
+    return corr_map
