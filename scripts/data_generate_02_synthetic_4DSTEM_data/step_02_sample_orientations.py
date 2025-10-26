@@ -79,6 +79,7 @@ def sample_polarAngles_on_unit_circle(number_of_polar_angles_to_sample):
 def parse_args():
     parser = argparse.ArgumentParser(description="number for sampling random orienations")
     parser.add_argument("--num_orientations", type = int, help="number of randomly sampled orientations", default = int(60))
+    parser.add_argument("--random_seed", type = int, help="random seed for numpy random number generator", default = int(77))
  
     return parser.parse_args()
 
@@ -86,6 +87,9 @@ def main():
     
     args = parse_args()
     number_of_orientations_to_sample = args.num_orientations
+    
+    random_seed = args.random_seed
+    np.random.seed(random_seed) 
     
     print("")
     print("Action 1. Sampling random orientation (rotation) matrix (START)\n")

@@ -16,6 +16,7 @@ def parse_args():
     parser.add_argument("--num_orientations", type = int, help="number of randomly sampled orientations", default = int(60))
     parser.add_argument("--num_grains", type = int, help="number of distinct crystal grains", default = int(60))
     parser.add_argument("--ScanDimension", type = int, help="scan space dimension", default = int(128))
+    parser.add_argument("--random_seed", type = int, help="random seed for numpy random generator", default = int(11))
  
     return parser.parse_args()
 
@@ -25,6 +26,8 @@ def main():
     num_grains = args.num_grains
     syn_2D_scanSpace_map_side_dimension = args.ScanDimension
     num_sampled_orientations = args.num_orientations
+    random_seed = args.random_seed
+    np.random.seed(random_seed) 
     
     assert num_grains <= num_sampled_orientations, "number of grains must be equal or smaller than number of sampled orientations"    
     
@@ -106,7 +109,6 @@ def main():
                                                                 rotation_matrices_for_crystal,
                                                                 accelerating_voltage,
                                                                 k_max,
-                                                                thickness_num_for_sampling = 1000
         )
         
         DP_images_for_each_crystal.append(DPs_collection)
