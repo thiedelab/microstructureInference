@@ -38,12 +38,12 @@ def main():
     k_max = 0.0328 * 64
     accelerating_voltage = int(300e3)
     
-    list_of_crystal_names = ['Cu_fcc', 'Cu2O_cubic', 'CuO_monoclinic']
+    list_of_crystal_names = ['Cu_fcc', 'Cu2O_cubic']
     print("")
     print("list_of_crystal_names", list_of_crystal_names, "\n")
     
     saved_file_path = "./"
-    out_file_path = "./"
+
     ##############################################################################
     ##############################################################################
     ### READ backgrounds, correlation kernel, scan map, and rotations (START) ####
@@ -85,8 +85,11 @@ def main():
     DP_images_for_each_crystal = []
     rotation_labels_for_each_crystal = []
     grain_indices_for_each_crystal = []
+    thicknesses_for_each_crystal = []
     
     grain_indices_permuted = np.random.permutation(num_grains).astype(np.int64) + 1
+    
+    
     
     for crystal_idx, crystal_name in enumerate(list_of_crystal_names):
         print("")
@@ -98,7 +101,7 @@ def main():
         
         grain_indices_for_each_crystal.append(sampled_grain_indices)
     
-        DPs_collection, labels_collection = sample_diffraction_patterns_from_rotation_matrices(
+        DPs_collection, labels_collection, thickness_sampled = sample_diffraction_patterns_from_rotation_matrices(
                                                                 crystal, 
                                                                 rotation_matrices_for_crystal,
                                                                 accelerating_voltage,
@@ -108,6 +111,7 @@ def main():
         
         DP_images_for_each_crystal.append(DPs_collection)
         rotation_labels_for_each_crystal.append(labels_collection)
+        thicknesses_for_each_crystal.append(thickness_sampled)
     
     
     
@@ -134,10 +138,12 @@ def main():
     total_synthetic_data_4D = []
     total_labels_for_synthetic_data_4D = []
     total_crystal_class_label = []
+    total_thicknesses = []
     for i in range(syn_2D_scanSpace_map.shape[0]):
         row_synthetic_data_4D = []
         row_labels_for_synthetic_data_4D = []
         row_crystal_class_label = []
+        row_thickness = []
         for j in range(syn_2D_scanSpace_map.shape[1]):
             grain_index = int(syn_2D_scanSpace_map[i,j])
             if grain_index > 0:
@@ -151,9 +157,12 @@ def main():
                         
                         DPs_collection = DP_images_for_each_crystal[crystal_idx]
                         labels_collection = rotation_labels_for_each_crystal[crystal_idx]
+                        thickness_collection = thicknesses_for_each_crystal[crystal_idx]
     
                         DP = DPs_collection[index_where_grain_index_is_located[0]]
                         orientation_matrix = labels_collection[index_where_grain_index_is_located[0]]
+                        thickness = thickness_collection[index_where_grain_index_is_located[0]]
+                        
                         BG_idx = np.random.randint(0, high=backgrounds.shape[0], size=1, dtype=np.int64)
                         synthetic_diffraction_pattern = generate_synthetic_diffraction_pattern(DP, backgrounds[BG_idx[0]], correlation_kernel)
                         # print("synthetic_diffraction_pattern.shape", synthetic_diffraction_pattern.shape)
@@ -162,6 +171,7 @@ def main():
                         row_synthetic_data_4D.append(synthetic_diffraction_pattern)
                         row_labels_for_synthetic_data_4D.append(orientation_matrix)
                         row_crystal_class_label.append(crystal_idx)
+                        row_thickness.append(thickness)
     
                         
                 
@@ -177,11 +187,13 @@ def main():
                 row_synthetic_data_4D.append(synthetic_diffraction_pattern)
                 row_labels_for_synthetic_data_4D.append(np.zeros((3, 3), dtype=np.float32))
                 row_crystal_class_label.append(len(list_of_crystal_names))
+                row_thickness.append(0)
                 # print("synthetic_diffraction_pattern.shape", synthetic_diffraction_pattern.shape)
         
         total_synthetic_data_4D.append(row_synthetic_data_4D)
         total_labels_for_synthetic_data_4D.append(row_labels_for_synthetic_data_4D)
         total_crystal_class_label.append(row_crystal_class_label)
+        total_thicknesses.append(row_thickness)
         
     
     total_synthetic_data_4D = np.array(total_synthetic_data_4D)
@@ -196,6 +208,9 @@ def main():
     total_crystal_class_label = np.array(total_crystal_class_label)
     np.save("multi_crystal_synthetic_4DSTEM_data_crystalClass_labels.npy", total_crystal_class_label)
     print("Shape of crystal class labels for synthetic 4DSTEM data", total_crystal_class_label.shape, "\n")
+    
+    total_thicknesses = np.array(total_thicknesses)
+    np.save("multi_crystal_synthetic_4DSTEM_data_thickness_labels.npy", total_thicknesses)
     
     for crystal_idx, crystal_name in enumerate(list_of_crystal_names):
         print("crystal ", crystal_name, " class label: ", crystal_idx)

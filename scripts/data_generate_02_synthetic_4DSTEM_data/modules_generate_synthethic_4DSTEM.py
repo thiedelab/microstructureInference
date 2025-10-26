@@ -323,7 +323,7 @@ def generate_synthetic_diffraction_pattern(sim_diffrac_patt_img ,
                                            background_minimum_intensity_threshold = 0.05,
                                            diffraction_pattern_boundary_cut_off_range = 4,
                                            simulated_direct_beam_removal_range = 5,
-                                           gaussian_blur_sigma = 0.7,
+                                           gaussian_blur_sigma = 0.75,
                                           ):
 
     # np.random.seed(random_seed)  # For reproducibility
@@ -432,7 +432,7 @@ def process_background_diffraction_pattern(
                                             random_seed = 42,
                                             background_scaling_factor_mean = 0.9, 
                                             background_scaling_factor_std = 0.05,
-                                            direct_beam_scaling_factor = 2.2,
+                                            direct_beam_scaling_factor = 2.3,
                                             direct_beam_radius = 5,
                                             background_minimum_intensity_threshold = 0.8,
                                             diffraction_pattern_boundary_cut_off_range = 4,
@@ -611,15 +611,20 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
                                                        rotation_matrices,
                                                        accelerating_voltage,
                                                        k_max,
-                                                       thickness_num_for_sampling = 1000
+                                                       random_seed = 50,
+                                                       thickness_num_for_sampling = 500
                                                        ):
     crystal.setup_diffraction(accelerating_voltage)
-    crystal.calculate_structure_factors(k_max * 4.)
+    crystal.calculate_structure_factors(
+        k_max,
+    )
+    
+    np.random.seed(random_seed)
     
     # Convert the V_g to relativistic-corrected U_g and store in a datastructure optimized
     # for access by the Bloch code
     crystal.calculate_dynamical_structure_factors(
-        300e3, "WK-CP", k_max=k_max * 4., thermal_sigma=0.08, tol_structure_factor=-1.0
+        300e3, "WK-CP", k_max=k_max * 2., thermal_sigma=0.08, tol_structure_factor=-1.0
     )
     
     
@@ -632,18 +637,20 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
     
     DPs_collection = []
     labels_collection = []
+    thickness_sampled = []
     
 
     for RM_idx, orientation_matrix in enumerate(rotation_matrices):
         thicknesses = np.linspace(thickness_lower_limit, thickness_upper_limit, thickness_num_for_sampling)
+        
+        # thicknesses = np.random.uniform(thickness_lower_limit, thickness_upper_limit, thickness_num_for_sampling)
     
         beams = crystal.generate_diffraction_pattern(
-                        orientation_matrix = orientation_matrix,
-                        sigma_excitation_error = 0.045,
-                        tol_intensity = 0.0,
-                        k_max = k_max * 6.,
-                    )
-    
+                                    orientation_matrix = orientation_matrix,
+                                    sigma_excitation_error = 0.04,
+                                    tol_intensity = 0.0,
+                                    k_max = k_max,
+        )
     
         dynamic_patterns = crystal.generate_dynamical_diffraction_pattern(
                             beams = beams,
@@ -669,7 +676,7 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
             intensity = intensity / np.max(intensity)
     
     
-            indices_where_intensity_below_threshold = np.where(intensity < 5e-3)[0]
+            indices_where_intensity_below_threshold = np.where(intensity < 4e-3)[0]
             qx = np.delete(qx, indices_where_intensity_below_threshold)
             qy = np.delete(qy, indices_where_intensity_below_threshold)
             intensities_of_Bragg_disks = np.delete(intensity, indices_where_intensity_below_threshold)
@@ -677,7 +684,7 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
             # print("len(qx)", len(qx))
     
             # collection_together.append(np.stack((qx, qy, intensity)).T)
-            if len(qx) > 5:
+            if len(qx) > 1:
                 positions_of_Bragg_disks = np.stack((qx, qy)).T
                 k_radial_distnaces_of_BPs = np.linalg.norm(positions_of_Bragg_disks, axis = 1)
     
@@ -685,7 +692,7 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
                 indices_where_radial_distance_smaller_than_k_max = np.where(k_radial_distnaces_of_BPs < k_max_radial)[0]
                 indices_where_radial_distance_smaller_than_k_max = np.intersect1d(indices_where_radial_distance_smaller_than_k_max, indices_where_cartesian_is_smaller_than_k_max_square)
     
-                if len(indices_where_radial_distance_smaller_than_k_max) > 5:
+                if len(indices_where_radial_distance_smaller_than_k_max) > 1:
                     # print("len(indices_where_radial_distance_smaller_than_k_max)", len(indices_where_radial_distance_smaller_than_k_max))
                     # print("orientation_matrix\n", orientation_matrix)
                     
@@ -701,7 +708,8 @@ def sample_diffraction_patterns_from_rotation_matrices(crystal,
                     DP[64,64] = 10
                     DPs_collection.append(DP)
                     labels_collection.append(orientation_matrix)
+                    thickness_sampled.append(thicknesses[enIdx])
                     break
     
     # labels_collection = np.array(labels_collection)
-    return DPs_collection, labels_collection
+    return DPs_collection, labels_collection, thickness_sampled

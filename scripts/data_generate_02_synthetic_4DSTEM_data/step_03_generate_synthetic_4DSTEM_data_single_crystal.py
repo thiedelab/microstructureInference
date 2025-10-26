@@ -79,7 +79,7 @@ def main():
     
     crystal = py4DSTEM.process.diffraction.Crystal.from_CIF(Cu_cif_path + "Cu_fcc.cif")
     
-    DPs_collection, labels_collection = sample_diffraction_patterns_from_rotation_matrices(
+    DPs_collection, labels_collection, thickness_sampled = sample_diffraction_patterns_from_rotation_matrices(
                                                             crystal, 
                                                             sampled_rotation_matrices,
                                                             accelerating_voltage,
@@ -109,6 +109,7 @@ def main():
     
     total_synthetic_data_4D = []
     total_labels_for_synthetic_data_4D = []
+    total_thicknesses = []
     for i in range(syn_2D_scanSpace_map.shape[0]):
         row_synthetic_data_4D = []
         row_labels_for_synthetic_data_4D = []
@@ -117,6 +118,7 @@ def main():
             if k > 0:
                 orientation_matrix = labels_collection[k-1]
                 DP = DPs_collection[k-1]
+                total_thicknesses.append(thickness_sampled[k-1])
                 BG_idx = np.random.randint(0, high=backgrounds.shape[0], size=1, dtype=np.int64)
                 synthetic_diffraction_pattern = generate_synthetic_diffraction_pattern(DP, backgrounds[BG_idx[0]], correlation_kernel)
                 row_synthetic_data_4D.append(synthetic_diffraction_pattern)
@@ -137,6 +139,10 @@ def main():
     
     total_labels_for_synthetic_data_4D = np.array(total_labels_for_synthetic_data_4D)
     np.save("single_Cu_fcc_crystal_synthetic_4DSTEM_data_rotationMat_labels.npy", total_labels_for_synthetic_data_4D)
+    
+    
+    total_thicknesses = np.array(total_thicknesses)
+    np.save("single_Cu_fcc_crystal_synthetic_4DSTEM_data_thicknesses.npy", total_thicknesses)
     print("Shape of rotation matrix labels for synthetic 4DSTEM data", total_labels_for_synthetic_data_4D.shape)
     
     print("")

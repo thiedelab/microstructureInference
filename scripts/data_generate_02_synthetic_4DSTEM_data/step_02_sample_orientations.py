@@ -78,29 +78,20 @@ def sample_polarAngles_on_unit_circle(number_of_polar_angles_to_sample):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="number for sampling random orienations")
-    parser.add_argument("--num_orientations", type = int, help="number of randomly sampled orientations", default = int(32768))
-    parser.add_argument("--random_seed", type = int, help="seed for numpy random number generator", default = int(777))
-    parser.add_argument("--lattice_constant", type = float, help="unit cell lattice constant in Angstrom unit", default = float(3.6199))
+    parser.add_argument("--num_orientations", type = int, help="number of randomly sampled orientations", default = int(60))
  
     return parser.parse_args()
 
 def main():
     
     args = parse_args()
-    random_seed = int(args.random_seed)
     number_of_orientations_to_sample = args.num_orientations
-    lattice_constant = args.lattice_constant
-    
-    np.random.seed(random_seed)  # Set the seed
     
     print("")
     print("Action 1. Sampling random orientation (rotation) matrix (START)\n")
         
     randomly_sampled_zone_axes = sample_zone_axes_on_unit_sphere(number_of_orientations_to_sample)
     randomly_sampled_inPlane_angle = sample_polarAngles_on_unit_circle(number_of_orientations_to_sample)
-    
-    np.save("randomly_sampled_zone_axes_number%d_randSeed%d"%(number_of_orientations_to_sample, random_seed), randomly_sampled_zone_axes)
-    np.save("randomly_sampled_in_plane_angles_number%d_randSeed%d"%(number_of_orientations_to_sample, random_seed), randomly_sampled_inPlane_angle)
     
     
     randomly_sampled_orientation_matrices = []
