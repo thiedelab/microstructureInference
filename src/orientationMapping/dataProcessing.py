@@ -508,6 +508,14 @@ def make_orientation_map_based_on_4D_rotation_matrices(
         ensuring that the orientation is physically valid according to the crystal's 
         symmetry operations (e.g., rotation, reflection).
         
+        NOTE! This code only works if all the rotations come from the same
+        crystal systems. For different crystal systems, you have to introduce
+        different py4DSTEM crystal object. This is easy to do. 
+        Make another function that takes rotation matrices,
+        py4DSTEM crystal 1, crystal 2, ..., crystal N,
+        and 2D crystal system index array whose element is one of 0, ..., N-1.
+        Then, for given crystal phase, you just have to apply crystal.symmetry_reduce_directions
+        
     match_ind : int, optional, default=0
         Index indicating which match (orientation solution) to store in the 
         `Orientation` object. The default value is 0, which corresponds to 
