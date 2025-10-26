@@ -619,7 +619,7 @@ def so3_correlation_map(R_field):
 
 
 def calculate_correlation_function_btw_DPs_vectorized(
-    data_flattened,
+    fourD_STEM,
     real_space_grain_index,
     delta_max,
     ax0_Lbound,
@@ -634,9 +634,9 @@ def calculate_correlation_function_btw_DPs_vectorized(
     
     Parameters
     ----------
-    data_flattened : ndarray, shape (H, W, P)
-        Flattened diffraction pattern at each scan point.
-        P = 128*128 = number of pixels per diffraction pattern.
+    fourD_STEM : ndarray, shape (H, W, k_H, k_W)
+        2D diffraction pattern with shape (k_H, k_W) 
+        at each scan point in space (H,W).
     real_space_grain_index : ndarray, shape (H, W)
         Integer labels for grains (or background) at each scan pixel.
     delta_max : int
@@ -653,6 +653,8 @@ def calculate_correlation_function_btw_DPs_vectorized(
     """
 
     # --- Step 1. Extract region of interest
+    
+    data_flattened = np.copy(fourD_STEM.reshape(fourD_STEM.shape[0], fourD_STEM.shape[1], fourD_STEM.shape[2] * fourD_STEM.shape[3]))
     data_flat = np.copy(data_flattened[ax0_Lbound:ax0_Ubound, ax1_Lbound:ax1_Ubound])
     grain_idx = np.copy(real_space_grain_index[ax0_Lbound:ax0_Ubound, ax1_Lbound:ax1_Ubound])
     mask = (grain_idx == index_of_crystal)
@@ -694,4 +696,74 @@ def calculate_correlation_function_btw_DPs_vectorized(
             meanB = np.mean(B, axis=0)
             corr_map[dxi, dyi] = dot_mean - np.dot(meanA, meanB)
 
+    return corr_map
+
+def so3_correlation_map_masked(R_field, real_space_grain_index, index_of_crystal=1):
+    """
+    Compute 2D autocorrelation map for an SO(3) rotation field using cos(geodesic_distance),
+    but only for pairs of rotation matrices R_ij and R_i'j' where both pixels (i,j)
+    and (i',j') belong to the specified crystal grain.
+
+    Parameters
+    ----------
+    R_field : ndarray, shape (H, W, 3, 3)
+        Field of rotation matrices (each pixel is a 3x3 SO(3) rotation).
+    real_space_grain_index : ndarray, shape (H, W)
+        Integer labels for grains (or background) at each scan pixel (e.g., 0 or 1).
+    index_of_crystal : int, optional
+        Grain index for which to compute correlations (default is 1).
+
+    Returns
+    -------
+    corr_map : ndarray, shape (2H-1, 2W-1)
+        Correlation map, where corr_map[H-1+di, W-1+dj] is correlation at offset (di, dj).
+        The correlation is averaged only over valid (in-grain) pairs. Invalid offsets are 0.0.
+    """
+    H, W, _, _ = R_field.shape
+    corr_map = np.zeros((2 * H - 1, 2 * W - 1), dtype=np.float64)
+    
+    # 1. Create a boolean mask for the target crystal grain
+    mask = (real_space_grain_index == index_of_crystal)
+    
+    # 2. Compute traces for all pairwise dot products R_ij^T * R_i'j'
+    # This step remains the same for efficiency, calculating ALL pairwise traces.
+    R_flat = R_field.reshape(H * W, 3, 3)
+    # R_flat[n] is R_ij, R_flat[m] is R_i'j'
+    trace_mat = np.einsum('nki,mki->nm', R_flat, R_flat)
+    trace_4d = trace_mat.reshape(H, W, H, W)
+
+    # 3. Vectorized offset correlation with masking
+    for di in range(-H + 1, H):
+        for dj in range(-W + 1, W):
+            
+            # Slices for the overlapping region (spatial indices i, j)
+            i1 = slice(max(0, -di), min(H, H - di)) # indices for R_ij (starting point)
+            j1 = slice(max(0, -dj), min(W, W - dj))
+            i2 = slice(max(0, di), min(H, H + di))  # indices for R_i'j' = R_{i+di, j+dj} (offset point)
+            j2 = slice(max(0, dj), min(W, W + dj))
+
+            # Apply mask to both sets of indices
+            # mask1: True where R_ij is in the grain
+            mask1 = mask[i1, j1]
+            # mask2: True where R_{i+di, j+dj} is in the grain
+            mask2 = mask[i2, j2]
+            
+            # Valid pairs: both R_ij and R_i'j' must be in the grain
+            valid_pairs_mask = mask1 & mask2
+            
+            # Check if there are any valid pairs for this offset
+            if not np.any(valid_pairs_mask):
+                # If no valid pairs, the correlation remains 0.0 (from initialization)
+                continue
+            
+            # Select only the traces corresponding to the valid in-grain pairs
+            traces_overlap = trace_4d[i1, j1, i2, j2]
+            valid_traces = traces_overlap[valid_pairs_mask]
+
+            # Calculate the correlation for the valid pairs: cos(theta) = (Tr(R1^T R2) - 1) / 2
+            correlations = (valid_traces - 1) / 2
+            
+            # Store the mean correlation for the current offset (di, dj)
+            corr_map[H - 1 + di, W - 1 + dj] = correlations.mean()
+            
     return corr_map
