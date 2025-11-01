@@ -8,10 +8,13 @@ Created on Mon May 12 08:20:54 2025
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
+import h5py
+from skimage import transform
+import sys
 import numpy as np
-from orientationMapping.dataModules import cubic_proper_point_group_operations
-from orientationMapping.LossFunctions import pointGroup_map_rotation_prediction, pointGroup_map_rotation_and_phase_prediction, symmetric_orthogonalization
-
+from emdfile import tqdmnd
+from orientationMapping.dataModules import cubic_proper_point_group_operations, digitize_radial_distance, digitize_polarAngle, digitize_braggIntensity
+from orientationMapping.LossFunctions import pointGroup_map_rotation_prediction, pointGroup_map_rotation_prediction_return_geodesic_distance_stack, pointGroup_map_rotation_and_phase_prediction, symmetric_orthogonalization
 from scipy.spatial.distance import cdist
 import scipy.sparse as sp
 from scipy.optimize import linprog
@@ -21,6 +24,7 @@ def predict_rotation_sim_data_with_labels(model, dataloader, device, PAD = 0):
     point_group_op_matrices = point_group_op_matrices.to(device)
     
     predicted_rotation_matrices = []
+    geodesic_distances_stack = []
     losses, count = [], 0
         
 
@@ -36,15 +40,16 @@ def predict_rotation_sim_data_with_labels(model, dataloader, device, PAD = 0):
             pred = model(features, pad_mask)
             
             # print("pred", pred)
-            loss = pointGroup_map_rotation_prediction(pred, labels_r, point_group_op_matrices)
+            loss, geodesic_distances = pointGroup_map_rotation_prediction_return_geodesic_distance_stack(pred, labels_r, point_group_op_matrices)
             
             predicted_rotation_matrix = symmetric_orthogonalization(pred)
             predicted_rotation_matrices.append(predicted_rotation_matrix)
+            geodesic_distances_stack.append(geodesic_distances)
             
             losses.append(loss.item())
             count += 1
             
-    return torch.vstack(predicted_rotation_matrices), np.mean(losses)
+    return torch.vstack(predicted_rotation_matrices), torch.hstack(geodesic_distances_stack), np.mean(losses)
 
 
 def predict_rotation_and_phases_sim_data_with_labels(model, dataloader, device, PAD = 0):
@@ -192,6 +197,80 @@ def point_in_spherical_triangle_oriented(p, a, b, c, tol=1e-10):
         return True, -1
     else:
         return False, None
+
+
+def find_zone_axis_misalignment(rotation_matrices_1_str, rotation_matrices_2_str):
+    
+    zone_axis_001 = np.array([0., 0., 1.])
+
+    zone_axis_011 = np.array([0., 1., 1.])
+    zone_axis_011 = zone_axis_011 / np.linalg.norm(zone_axis_011)
+    
+    zone_axis_111 = np.array([1., 1., 1.])
+    zone_axis_111 = zone_axis_111 / np.linalg.norm(zone_axis_111)
+
+
+    rotation_matrices_1 = np.load(rotation_matrices_1_str, mmap_mode='r')
+    rotation_matrices_2 = np.load(rotation_matrices_2_str, mmap_mode='r')
+    
+    point_group_op_matrices = cubic_proper_point_group_operations()
+    point_group_op_matrices_np = point_group_op_matrices.detach().cpu().numpy()
+
+    if rotation_matrices_1.shape != rotation_matrices_2.shape:
+        raise ValueError("rotation_matrices_1 and rotation_matrices_2 must have the same shape")
+    if rotation_matrices_1.shape[1:] != (3, 3):
+        raise ValueError("Each rotation matrix must be of shape (3,3)")
+
+    total_zone_axis_misalignment = []
+
+    for rotIdx, rotation_1 in enumerate(rotation_matrices_1):
+        rotation_2 = rotation_matrices_2[rotIdx]
+
+        rotation_1_symmEquiv = point_group_op_matrices_np @ rotation_1
+        rotation_2_symmEquiv = point_group_op_matrices_np @ rotation_2
+
+        zone_axis_for_rotation_1 = None
+        zone_axis_for_rotation_2 = None
+    
+        for RotationMatrix in rotation_1_symmEquiv:
+            zone_axis = RotationMatrix[:,2]
+            IsCanonical_1, sign_1 = point_in_spherical_triangle_oriented(zone_axis, zone_axis_001, zone_axis_011, zone_axis_111)
+            if IsCanonical_1:
+                # real_label_canonical = RM
+                zone_axis_for_rotation_1 = RotationMatrix[:,2]
+                # print("rotation_1 rotation_matrix\n", RotationMatrix, "\n")
+                # print("sign_1", sign_1)
+                break
+    
+        # print("")
+    
+        for RotationMatrix in rotation_2_symmEquiv:
+            zone_axis = RotationMatrix[:,2]
+            IsCanonical_2, sign_2 = point_in_spherical_triangle_oriented(zone_axis, zone_axis_001, zone_axis_011, zone_axis_111)
+            if IsCanonical_2:
+                # real_label_canonical = RM
+                zone_axis_for_rotation_2 = RotationMatrix[:,2]
+                # print("rotation_2 rotation_matrix\n", RotationMatrix, "\n")
+                # print("sign_2", sign_2)
+                break
+
+        # --- Error handling ---
+        if zone_axis_for_rotation_1 is None:
+            raise RuntimeError(f"No canonical zone axis found for rotation_1 at index {rotIdx}")
+        if zone_axis_for_rotation_2 is None:
+            raise RuntimeError(f"No canonical zone axis found for rotation_2 at index {rotIdx}")
+
+
+        dot_product_between_two_zone_axes = np.clip(np.dot(zone_axis_for_rotation_1, zone_axis_for_rotation_2), -1.0, 1.0)
+        zone_axis_misalignment = np.arccos(dot_product_between_two_zone_axes)
+        # print("zone_axis_misalignment\n", zone_axis_misalignment)
+
+
+        # zone_axis_misalignment = zone_axis_mis_alignment = np.arccos(np.dot(zone_axis_for_rotation_1, zone_axis_for_rotation_2))
+        total_zone_axis_misalignment.append(zone_axis_misalignment)
+
+    return np.array(total_zone_axis_misalignment)
+    
 
 def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment_tol = 1e-12):
 
@@ -361,6 +440,47 @@ def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment
         final_assignment_cost = np.average(cost)
         
     return final_assignment_cost
+
+
+def sample_rotation_at_rand_geodesic_distance(R1, geodesic_distance, random_seed = 555):
+    """
+    Sample a random rotation R2 such that the geodesic distance
+    d(R1, R2) = geodesic_distance on SO(3).
+    
+    Parameters
+    ----------
+    R1 : ndarray of shape (3,3)
+        Proper rotation matrix in SO(3)
+    geodesic_distance : float
+        Desired geodesic distance (rotation angle) in radians
+    
+    Returns
+    -------
+    R2 : ndarray of shape (3,3)
+        Rotation matrix at geodesic distance geodesic_distance from R1
+    """
+    
+    np.random.seed(random_seed) 
+    # Step 1: Sample a random rotation axis uniformly on the sphere
+    axis = np.random.randn(3)
+    axis /= np.linalg.norm(axis)
+    
+    # Step 2: Construct rotation matrix about this axis by geodesic_distance
+    x, y, z = axis
+    c = np.cos(geodesic_distance)
+    s = np.sin(geodesic_distance)
+    C = 1 - c
+    R_delta = np.array([
+        [c + x*x*C, x*y*C - z*s, x*z*C + y*s],
+        [y*x*C + z*s, c + y*y*C, y*z*C - x*s],
+        [z*x*C - y*s, z*y*C + x*s, c + z*z*C]
+    ])
+    
+    # Step 3: Multiply to get the new rotation
+    R2 = R1 @ R_delta
+    
+    return R2
+
 
 def pyxem_correlation_metric(image, py4DSTEM_bragg_vecto_list, k_max, pixel_numbers, intensity_gamma_correction = 0.5):
     
@@ -582,7 +702,110 @@ def make_orientation_map_based_on_4D_rotation_matrices(
 
     return new_orientation_map
 
+def process_pandas_tabular_data(
+                                df,
+                                num_bins_radialDistance,
+                                num_bins_polarAngle,
+                                num_bins_braggintensity,
+                                max_sequence_length,
+                                max_radial_distance,
+                                max_braggIntensity,
+                                radial_distance_tolerance = 0.0001,
+                                intensity_tolerance = 0.0001,
+                                ):
 
+
+    radial_bins = np.linspace(0.0, max_radial_distance + (radial_distance_tolerance), num_bins_radialDistance + 1)
+    radial_bin_centers = (radial_bins[:-1] + radial_bins[1:]) / 2
+
+    angle_bins = np.arange(-np.pi - np.pi/360., np.pi + np.pi/360., np.pi/180.)
+    angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
+    angle_bins[-1] = np.pi + np.pi/360 # further change the last element
+
+    intensity_bins = np.linspace(0.0, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
+    intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
+
+
+        
+    list_of_Bragg_disks_total = []
+
+    # max_r = []
+    # min_r = []
+    for idx, diffractionPattern in df.items():
+        np_diffractionPattern = np.array(diffractionPattern['input'])
+        np_diffractionPattern[:, 0] = digitize_radial_distance(np_diffractionPattern[:,0], radial_bins)        
+        np_diffractionPattern[:, 1] = digitize_polarAngle(np_diffractionPattern[:,1], angle_bins)
+        np_diffractionPattern[:, 2] = digitize_braggIntensity(np_diffractionPattern[:,2], intensity_bins)
+        np_diffractionPattern = np_diffractionPattern.astype(np.int32)   
+
+            
+        if idx == 0:
+            if len(diffractionPattern['input']) < max_sequence_length:
+                numbers_of_pad_tokens_to_add = max_sequence_length - len(diffractionPattern['input'])
+                for recur in range(numbers_of_pad_tokens_to_add):
+                    np_diffractionPattern = np.vstack((np_diffractionPattern, np.array([[0, 0, 0]])))
+
+        # print("np_diffractionPattern after\n", np_diffractionPattern)
+        
+    
+        list_of_Bragg_disks_total.append(torch.tensor(np_diffractionPattern))
+    # max_r = np.array(max_r)
+    # min_r = np.array(min_r)    
+    
+    radial_bins = torch.tensor(radial_bins, dtype = torch.float32)
+    radial_bin_centers = torch.tensor(radial_bin_centers, dtype = torch.float32)
+    
+    angle_bins = torch.tensor(angle_bins, dtype = torch.float32)
+    angle_bin_centers = torch.tensor(angle_bin_centers, dtype = torch.float32)
+    
+    intensity_bins = torch.tensor(intensity_bins, dtype = torch.float32)
+    intensity_bin_centers = torch.tensor(intensity_bin_centers, dtype = torch.float32)
+    
+    return list_of_Bragg_disks_total, radial_bins, radial_bin_centers, angle_bins, angle_bin_centers, intensity_bins, intensity_bin_centers
+
+def pre_process_experimental_BraggDisk(bragg_peaks, calibrated = True, remove_direct_beam = True):
+    scan_x_dim, scan_y_dim = bragg_peaks.Rshape
+    
+    table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex = {}
+    dict_idx = 0
+    for i in range(scan_x_dim):
+        for j in range(scan_y_dim):
+            # if len(bragg_peaks.cal[i,j].qx) > 2:
+            number_of_Bragg_disks = 0
+                
+            if calibrated:
+
+                qx = np.copy(bragg_peaks.cal[i,j].data["qx"])
+                qy = np.copy(bragg_peaks.cal[i,j].data["qy"])
+                intensity = np.copy(bragg_peaks.cal[i,j].data["intensity"])
+                number_of_Bragg_disks = len(qx)
+            
+            else:
+                # This is the case where we arbitrarily generate synthetic 4DSTEM
+                qx = np.copy(bragg_peaks._v_uncal[i,j].data["qx"])
+                qy = np.copy(bragg_peaks._v_uncal[i,j].data["qy"])
+                intensity = np.copy(bragg_peaks._v_uncal[i,j].data["intensity"])
+                number_of_Bragg_disks = len(qx)
+            
+            if remove_direct_beam:
+
+                k_radial_distnaces_of_BPs = np.linalg.norm(np.stack((qx, qy)).T, axis = 1)
+                index_of_direct_beam = np.argmin(k_radial_distnaces_of_BPs)
+                qx = np.delete(qx, index_of_direct_beam)
+                qy = np.delete(qy, index_of_direct_beam)
+                intensity = np.delete(intensity, index_of_direct_beam)
+                number_of_Bragg_disks = len(qx)
+            
+            if number_of_Bragg_disks > 1:
+                            
+                positions_of_Bragg_disks = np.stack((qx, qy)).T
+                k_radial_distnaces_of_BPs = np.linalg.norm(positions_of_Bragg_disks, axis = 1)
+                polar_angles = np.arctan2(positions_of_Bragg_disks[:,1], positions_of_Bragg_disks[:,0])
+    
+                table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex[dict_idx] = {'input': np.stack((k_radial_distnaces_of_BPs, polar_angles, intensity/np.max(intensity))).T, 'scanIndices': [i,j]}
+                
+                dict_idx += 1
+    return table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex
 
 def so3_correlation_map(R_field):
     """
@@ -767,3 +990,291 @@ def so3_correlation_map_masked(R_field, real_space_grain_index, index_of_crystal
             corr_map[H - 1 + di, W - 1 + dj] = correlations.mean()
             
     return corr_map
+
+
+def read_4D(fname, trim_meta = True):
+
+    '''
+    Read the 4D dataset as a numpy array from .raw , . mat, .npy file.
+    Input:
+
+    fname: the file path
+
+    Return: 
+
+    dp       : numpy array
+    dp_shape : the shape of the data
+
+    '''
+
+    fname_end = fname.split('.')[-1]
+
+    if fname_end == 'raw':
+        with open(fname, 'rb') as file:
+            dp = np.fromfile(file, np.float32)
+
+        columns = 128    
+        rows = 130
+
+        # print("dp.shape", dp.shape)
+            
+        sqpix = dp.size/columns/rows
+        #Assuming square scan, i.e. same number of x and y scan points
+        pix = int(sqpix**(0.5))
+        
+        dp = np.reshape(dp, (pix, pix, 130, 128), order = 'C')
+        
+        # Trim off the last two meta data rows if desired.  
+        # The meta data is for EMPAD debugging, 
+        # and generally doesn't need to be kept.
+        if trim_meta:
+            # dp = dp[:,:,0:128,:]
+            # print("dp[:,:,128:,:].shape", dp[:,:,128:,:].shape, "\n")
+            # print("dp[:,:,128:,:]\n", dp[:,:,128:,:], "\n")
+            # print("dp[:,:,128,:]\n", dp[:,:,128,:], "\n")
+            # print("dp[:,:,129,:]\n", dp[:,:,129,:], "\n")
+            dp = dp[:,:,:128,:]
+
+    ## Read 4D data from .mat file
+
+    elif fname_end == 'mat':
+
+        with h5py.File(fname, "r") as f:
+            
+            data_name = list(f.keys())[0]
+            dp = np.array(list(f[data_name]))
+    elif fname_end == 'npy':
+        dp = np.load(fname)
+    else:
+        print('The Format is WRONG!! Only support .mat , .raw & .npy file !!') 
+
+
+    sel = dp < 1
+    dp[sel] = 1
+    
+    return dp
+
+def align(cbed_data):
+
+    '''
+
+    Align the diffraction patterns through the Center of mass of the center beam
+    '''
+
+    x, y, kx, ky = np.shape(cbed_data)
+    com_x, com_y = quickCOM(cbed_data) # need to add
+    cbed_tran    = np.zeros((x, y, kx, ky))
+    
+    for i in range(x):
+        for j in range(y):
+            afine_tf = transform.AffineTransform(translation=(-kx//2+com_x[i,j], -ky//2+com_y[i,j]))
+            cbed_tran[i,j,:,:] = transform.warp(cbed_data[i,j,:,:], inverse_map=afine_tf)
+        sys.stdout.write('\r %d,%d' % (i, j) + ' '*10)
+    com_x2, com_y2 = quickCOM(cbed_tran)
+    std_com = (np.std(com_x2), np.std(com_y2))
+    mean_com = (np.mean(com_x2), np.mean(com_y2))
+    
+    return cbed_tran, mean_com, std_com
+
+def quickCOM(cbed_data):
+    x, y, kx, ky = np.shape(cbed_data)
+    center_x = kx//2 ; center_y = ky//2 
+    disk = 5
+    mask = spotmask(center_x,center_y, kx, disk)
+    
+    ap2_x, ap2_y = centroid2(cbed_data,x, y, kx, mask)
+    
+    return ap2_x, ap2_y
+
+def spotmask(center_x,center_y, kx, disk):
+    
+    innerDisk   = disk
+
+    mask = np.zeros((kx,kx))
+    for i in range(kx):
+        for j in range(kx):
+            if (i - center_x) ** 2 + (j - center_y) ** 2 < innerDisk ** 2:
+                mask[i][j] = 1
+
+    return mask
+
+def centroid2(fun, x, y, kx, mask):
+
+    ap2_x = np.zeros((x,y)); ap2_y = np.zeros((x,y))
+    rx, ry  = np.meshgrid(kx, kx)
+    vx = np.arange(kx); vy = np.arange(kx)
+    for i in range(x):
+        for j in range(y):
+            cbed = np.squeeze(fun[i,j, :, :] * mask)
+            pnorm = np.sum(cbed)
+            ap2_x[i,j] = np.sum(vx * np.sum(cbed, axis = 0))/pnorm
+            ap2_y[i,j] = np.sum(vy * np.sum(cbed, axis = 1))/pnorm
+            
+    return ap2_x, ap2_y
+
+
+
+def match_orientations_from_custom_bragg_peaks(
+    custom_4D_Bragg_disk_pointList,
+    crystal,
+    num_matches_return: int = 1,
+    min_angle_between_matches_deg=None,
+    min_number_peaks: int = 3,
+    inversion_symmetry: bool = True,
+    multiple_corr_reset: bool = True,
+    return_orientation: bool = True,
+    progress_bar: bool = True,
+    ):
+
+    """
+    Modified the function `py4DSTEM.process.diffraction.crystal_ACOM.match_orientations` 
+    within the py4DSTEM library (v14.08).
+    
+    Parameters
+    --------
+    bragg_peaks_array: PointListArray
+        PointListArray containing the Bragg peaks and intensities, with calibrations applied
+    num_matches_return: int
+        return these many matches as 3th dim of orient (matrix)
+    min_angle_between_matches_deg: int
+        Minimum angle between zone axis of multiple matches, in degrees.
+        Note that I haven't thought how to handle in-plane rotations, since multiple matches are possible.
+    min_number_peaks: int
+        Minimum number of peaks required to perform ACOM matching
+    inversion_symmetry: bool
+        check for inversion symmetry in the matches
+    multiple_corr_reset: bool
+        keep original correlation score for multiple matches
+    return_orientation: bool
+        Return orientation map from function for inspection.
+        The map is always stored in the Crystal object.
+    progress_bar: bool
+        Show or hide the progress bar
+
+    """
+    
+    from py4DSTEM.process.diffraction.utils import OrientationMap
+
+    orientation_map = OrientationMap(
+                                    num_x = custom_4D_Bragg_disk_pointList.shape[0],
+                                    num_y = custom_4D_Bragg_disk_pointList.shape[1],
+                                    num_matches = num_matches_return,
+    )
+
+    for rx, ry in tqdmnd(
+                        *custom_4D_Bragg_disk_pointList.shape,
+                        desc="Matching Orientations",
+                        unit=" PointList",
+                        disable=not progress_bar,
+    ):
+            
+        orientation  = crystal.match_single_pattern(
+                                                    custom_4D_Bragg_disk_pointList._v_uncal[rx, ry],
+                                                    num_matches_return=num_matches_return,
+                                                    min_angle_between_matches_deg=min_angle_between_matches_deg,
+                                                    min_number_peaks=min_number_peaks,
+                                                    inversion_symmetry=inversion_symmetry,
+                                                    multiple_corr_reset=multiple_corr_reset,
+                                                    plot_corr=False,
+                                                    verbose=False,
+        )
+
+        # visualize plot and double check that the orientation match looks reasonable.
+        
+        # bragg_peaks_fit = crystal.generate_diffraction_pattern(
+        #     orientation_matrix = orientation.matrix[0],
+        #     ind_orientation=0,
+        #     sigma_excitation_error=sigma_compare)
+        
+        # # plot comparisons
+        # py4DSTEM.process.diffraction.plot_diffraction_pattern(
+        #     bragg_peaks_fit,
+        #     bragg_peaks_compare=custom_4D_Bragg_disk_pointList._v_uncal[rx, ry],
+        #     scale_markers=1000,
+        #     scale_markers_compare=4e4,
+        #     plot_range_kx_ky=range_plot,
+        #     min_marker_size=1,
+        #     figsize = (5,5),
+        # )
+        # plt.show()
+
+        orientation_map.set_orientation(orientation, rx, ry)
+
+
+
+    return orientation_map
+    
+def generate_custom_bragg_disks_pointList(
+                                    # crystal,
+                                    scan_space_dimension,
+                                    diffraction_pattern_table_str,
+                                    orientation_matrix_str,
+                                    recip_x_dimension = 128,
+                                    recip_y_dimension = 128,
+                                    diffraction_space_pixel_size = 0.0328,
+                                    np_random_seed = 64,
+                                    cut_off_for_selecting_Bragg_disk_token = -100000.,
+):
+    np.random.seed(np_random_seed)
+    from py4DSTEM import BraggVectors
+    from itertools import product
+    from py4DSTEM.data import QPoints
+    
+
+    bragg_disks_pointList = BraggVectors((scan_space_dimension, scan_space_dimension), (recip_x_dimension, recip_y_dimension))
+
+    # Set calibration parameters
+    bragg_disks_pointList.calibration.set_Q_pixel_size(diffraction_space_pixel_size)
+    bragg_disks_pointList.calibration.set_Q_pixel_units('A^-1')
+    bragg_disks_pointList.setcal()
+
+    Bragg_disk_table_mmap = np.load(diffraction_pattern_table_str, mmap_mode = 'r')
+    orientation_label_mmap = np.load(orientation_matrix_str, mmap_mode = 'r')
+    
+    number_of_a_Bragg_disk_list_in_entire_stack = len(orientation_label_mmap)
+    number_of_a_Bragg_disk_list_to_sample = int(scan_space_dimension * scan_space_dimension)
+
+    assert number_of_a_Bragg_disk_list_to_sample <= number_of_a_Bragg_disk_list_in_entire_stack, "number of scan space dimension should be equal to or lower than 500"
+
+    permuted_indices = np.random.permutation(number_of_a_Bragg_disk_list_in_entire_stack)
+    selected_indices = permuted_indices[:number_of_a_Bragg_disk_list_to_sample]
+
+    orientation_matrices_4D = np.zeros((scan_space_dimension, scan_space_dimension,3,3), dtype = np.float32)
+
+    for idx, (rx, ry) in enumerate(product(range(scan_space_dimension), repeat=2)):
+        selected_index = selected_indices[idx]
+
+        Bragg_disk_table = Bragg_disk_table_mmap[selected_index]
+
+        orientation_matrices_4D[rx,ry] = orientation_label_mmap[selected_index]
+
+        # print("Bragg_disk_table\n", Bragg_disk_table, "\n")
+
+        indices_of_Bragg_disk_tokens = np.where(Bragg_disk_table[:,0] > cut_off_for_selecting_Bragg_disk_token)[0]
+
+        # print("indices_of_Bragg_disk_tokens\n", indices_of_Bragg_disk_tokens)
+
+        Bragg_disk_table_Bragg_disk_token_only = Bragg_disk_table[indices_of_Bragg_disk_tokens]
+
+        # print("Bragg_disk_table_Bragg_disk_token_only\n", Bragg_disk_table_Bragg_disk_token_only, "\n")
+
+        # Prepare the data structure for maxima with dtype (qx, qy, intensity)
+        dtype = np.dtype([("x", float), ("y", float), ("intensity", float)])
+        maxima = np.zeros(len(Bragg_disk_table_Bragg_disk_token_only), dtype=dtype)
+
+        for i, bragg_vector in enumerate(Bragg_disk_table_Bragg_disk_token_only):
+            maxima["x"][i] = bragg_vector[0]
+            maxima["y"][i] = bragg_vector[1]
+            maxima["intensity"][i] = bragg_vector[2]
+        
+        # Create QPoints object with already calibrated data
+        maxima = QPoints(maxima)
+
+        # No need to apply calibration transformation as data is already calibrated.
+        # Directly assign the calibrated maxima data
+        bragg_disks_pointList._v_uncal[rx, ry] = maxima
+
+        
+
+    return bragg_disks_pointList, orientation_matrices_4D
+
