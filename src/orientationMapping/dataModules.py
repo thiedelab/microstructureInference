@@ -472,6 +472,24 @@ def digitize_braggIntensity(braggDisk_intensities, intensity_bins):
     return np.digitize(braggDisk_intensities, intensity_bins) - 1
 
 
+class table_DP_for_visualization(Dataset):
+    def __init__(self, input_table, transform=None):
+        self.data = np.load(input_table, mmap_mode='r')
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        x = torch.tensor(x, dtype=torch.int64)
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x
+
+    def __len__(self):
+        return len(self.data)
+    
+
 class ExpDataset(Dataset):
     def __init__(self, data, transform=None):
         self.data = data.long()
@@ -487,6 +505,7 @@ class ExpDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+    
 
 class DataSetPointGroup_rotation(Dataset):
     def __init__(self, input_file, rot_file, angle_bin_center_num, transform=None):

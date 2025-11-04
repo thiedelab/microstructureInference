@@ -19,6 +19,30 @@ from scipy.spatial.distance import cdist
 import scipy.sparse as sp
 from scipy.optimize import linprog
 
+def get_attention_matrix(model, dataloader, device, PAD = 0):
+    
+    attention_layer_0_stack = []
+    attention_layer_1_stack = []
+    attention_layer_2_stack = []
+        
+    with torch.no_grad():
+        model.eval()
+        for x in dataloader:
+            features = x.to(device)
+            pad_mask = (torch.sum(features, dim = 2) == PAD).view(features.size(0), 1, 1, features.size(1))
+            
+            _ = model(features, pad_mask, True)
+            
+            attn_layer0 = model.encoder.encoder_blocks[0].last_attn
+            attn_layer1 = model.encoder.encoder_blocks[1].last_attn
+            attn_layer2 = model.encoder.encoder_blocks[2].last_attn
+            
+            attention_layer_0_stack.append(attn_layer0.clone().detach())
+            attention_layer_1_stack.append(attn_layer1.clone().detach())
+            attention_layer_2_stack.append(attn_layer2.clone().detach())
+            
+    return attention_layer_0_stack, attention_layer_1_stack, attention_layer_2_stack
+
 def predict_rotation_sim_data_with_labels(model, dataloader, device, PAD = 0):
     point_group_op_matrices = cubic_proper_point_group_operations()
     point_group_op_matrices = point_group_op_matrices.to(device)
@@ -100,6 +124,27 @@ def predict_rotation_experimental_data(model, exp_dataloader, device, PAD = 0):
             predicted_rotation_matrices.append(predicted_rotation_matrix)
             
     return torch.vstack(predicted_rotation_matrices)
+
+def predict_rotation_and_phase_experimental_data(model, exp_dataloader, device, PAD = 0):
+    
+    predicted_rotation_matrices = []
+    predicted_phase_labels = []
+
+    with torch.no_grad():
+        model.eval()
+        for x in exp_dataloader:
+            features = x.to(device)
+            pad_mask = (torch.sum(features, dim = 2) == PAD).view(features.size(0), 1, 1, features.size(1))            
+            
+            pred = model(features, pad_mask)
+                        
+            predicted_rotation_matrix = symmetric_orthogonalization(pred[0])
+            probabilities = torch.sigmoid(pred[1])
+            predicted_phase_label = (probabilities >= 0.5).float()
+            predicted_rotation_matrices.append(predicted_rotation_matrix)
+            predicted_phase_labels.append(predicted_phase_label)
+            
+    return torch.vstack(predicted_rotation_matrices), torch.vstack(predicted_phase_labels)
 
 def point_in_spherical_triangle_oriented(p, a, b, c, tol=1e-10):
     """
@@ -805,6 +850,55 @@ def pre_process_experimental_BraggDisk(bragg_peaks, calibrated = True, remove_di
                 table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex[dict_idx] = {'input': np.stack((k_radial_distnaces_of_BPs, polar_angles, intensity/np.max(intensity))).T, 'scanIndices': [i,j]}
                 
                 dict_idx += 1
+    return table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex
+
+def pre_process_synthetic_4DSTEM(bragg_peaks, ref_scan_indices, calibrated = True, remove_direct_beam = True):
+    scan_x_dim, scan_y_dim = bragg_peaks.Rshape
+    
+    table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex = {}
+    dict_idx = 0
+    for scan_index in ref_scan_indices:
+        i = scan_index[0]
+        j = scan_index[1]
+        number_of_Bragg_disks = 0
+            
+        if calibrated:
+
+            qx = np.copy(bragg_peaks.cal[i,j].data["qx"])
+            qy = np.copy(bragg_peaks.cal[i,j].data["qy"])
+            intensity = np.copy(bragg_peaks.cal[i,j].data["intensity"])
+            number_of_Bragg_disks = len(qx)
+        
+        else:
+            # This is the case where we arbitrarily generate synthetic 4DSTEM
+            qx = np.copy(bragg_peaks._v_uncal[i,j].data["qx"])
+            qy = np.copy(bragg_peaks._v_uncal[i,j].data["qy"])
+            intensity = np.copy(bragg_peaks._v_uncal[i,j].data["intensity"])
+            number_of_Bragg_disks = len(qx)
+        
+        if remove_direct_beam:
+
+            k_radial_distnaces_of_BPs = np.linalg.norm(np.stack((qx, qy)).T, axis = 1)
+            index_of_direct_beam = np.argmin(k_radial_distnaces_of_BPs)
+            qx = np.delete(qx, index_of_direct_beam)
+            qy = np.delete(qy, index_of_direct_beam)
+            intensity = np.delete(intensity, index_of_direct_beam)
+            number_of_Bragg_disks = len(qx)
+        
+        if number_of_Bragg_disks > 1:
+                        
+            positions_of_Bragg_disks = np.stack((qx, qy)).T
+            k_radial_distnaces_of_BPs = np.linalg.norm(positions_of_Bragg_disks, axis = 1)
+            polar_angles = np.arctan2(positions_of_Bragg_disks[:,1], positions_of_Bragg_disks[:,0])
+
+            table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex[dict_idx] = {'input': np.stack((k_radial_distnaces_of_BPs, polar_angles, intensity/np.max(intensity))).T, 'scanIndices': [i,j]}
+            
+            dict_idx += 1
+        else:
+            raise ValueError(f"number of Bragg disk in scan index: {i},{j} are less then 2. orientation mapping requires at least two Bragg disks in a diffraction pattern. Try to decrease intensity threshold for Bragg disk detection. Otherwise find another dataset.")
+    
+    
+    assert dict_idx == ref_scan_indices.shape[0], "In one of Backgroun diffraction patterns, one or more Bragg disk is detected. This exlcudes direct beam. Please increase threshold for Bragg disk detection or try another probe kernel."
     return table_of_BraggDisk_qx_qy_intensity_for_eachScanIndex
 
 def so3_correlation_map(R_field):
