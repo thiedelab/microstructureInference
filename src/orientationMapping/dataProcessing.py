@@ -720,10 +720,10 @@ def make_orientation_map_based_on_4D_rotation_matrices(
                 new_orientation.corr[match_ind] = correlation_thr # Set correlation value high such that crystal.plot_orientation_maps module can plot it.
                 #######
     
-                if np.sum(new_orientation.matrix[match_ind][:,2]) < 0.0:
-                    new_orientation.mirror[match_ind] = True
-                else:
-                    new_orientation.mirror[match_ind] = False
+                # if np.sum(new_orientation.matrix[match_ind][:,2]) < 0.0:
+                #     new_orientation.mirror[match_ind] = True
+                # else:
+                #     new_orientation.mirror[match_ind] = False
                     
             else:
                 new_orientation = Orientation(num_matches=num_matches_return)
