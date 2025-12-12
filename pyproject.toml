@@ -16,6 +16,8 @@ dependencies = [
 		"scipy>=1.15.2",
 		"torchinfo>=1.8.0",
 		"tqdm>=4.67.1",
+		"seaborn>=0.13.2",
+
 
 		# Libraries below are required for
 		# importing and using py4DSTEM

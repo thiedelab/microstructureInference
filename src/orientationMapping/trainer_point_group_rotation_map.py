@@ -6,29 +6,27 @@ from tqdm import tqdm
 import os
 #import orientationMapping.dataModules as pPd
 
-def save_checkpoint(model, optimizer, scheduler, epoch, checkpoint_path):
+def save_checkpoint(model, optimizer, linear_warmup, cos_decay, epoch, checkpoint_path):
     checkpoint = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-        'scheduler_state_dict': scheduler.state_dict(),
+        'linear_warmup_state_dict': linear_warmup.state_dict(),
+        'cos_decay_state_dict': cos_decay.state_dict(),
     }
     torch.save(checkpoint, checkpoint_path)
     
-def load_checkpoint(model, optimizer, scheduler, checkpoint_path, device):
+def load_checkpoint(model, optimizer, linear_warmup, cos_decay, checkpoint_path, device):
     checkpoint = torch.load(checkpoint_path, map_location=device)
-
+    
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-
-    # Start from the next epoch
+    
+    linear_warmup.load_state_dict(checkpoint['linear_warmup_state_dict'])
+    cos_decay.load_state_dict(checkpoint['cos_decay_state_dict'])
+    
     start_epoch = checkpoint['epoch'] + 1
-
-    # Resume scheduler with last_epoch as the last epoch in the checkpoint
-    scheduler.last_epoch = checkpoint['epoch']
-
-    return model, optimizer, scheduler, start_epoch
+    return model, optimizer, linear_warmup, cos_decay, start_epoch
 
 def train_epoch(model, dataloader, optimizer, device, point_group_op_matrices, PAD = 0):
     model.train()
@@ -84,32 +82,28 @@ def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, co
         print(f'ep {ep}: val_loss={val_loss:.4f}')
 
         valid_error.append(val_loss)
-
+        
         # update scheduler
         if ep < num_warmup_epochs:
             linear_warmup.step()
             print("linear_warmup.get_last_lr()", linear_warmup.get_last_lr())
-        elif ep >= num_warmup_epochs:
-            if ep < cos_decay_epoch + num_warmup_epochs:
-                cos_decay.step()
-                print("cos_decay.get_last_lr()", cos_decay.get_last_lr())
-            else:
-                for param_group in optimizer.param_groups:
-                    print("learning rate: ", param_group['lr'])
-                    
+        else:
+            cos_decay.step()
+            print("cos_decay.get_last_lr()", cos_decay.get_last_lr())
         
         # save checkpoint
         if val_loss < best_valid_loss:
             checkpoint_path = os.path.join(file_path, "best_model.pth")
-            save_checkpoint(model, optimizer, cos_decay, ep, checkpoint_path)
+            save_checkpoint(model, optimizer, linear_warmup, cos_decay, ep, checkpoint_path)
             print("")
             print("ep", ep, " val_loss", val_loss, ", new best model saved")
             print("")
-            
+
             best_valid_loss = val_loss
-        if ep % save_interval == 0:
-            interval_checkpoint_path = os.path.join(file_path, f"model_epoch_{ep}_valEr_{val_loss:.7f}.pth")
-            save_checkpoint(model, optimizer, cos_decay, ep, interval_checkpoint_path)
+
+        the_most_recent_model_path = os.path.join(file_path, "last_updated_model.pth")
+        save_checkpoint(model, optimizer, linear_warmup, cos_decay, ep, the_most_recent_model_path)
+
     return train_error, valid_error
         
 def evaluate(model, dataloader, device, point_group_op_matrices, PAD):
