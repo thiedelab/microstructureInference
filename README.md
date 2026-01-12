@@ -6,7 +6,6 @@ A package designed to train a model for identifying orientations of a single cry
 
 We have made modifications and additions to the original py4DSTEM codebase to support simulations of dynamic diffraction from SO3 proper orientation matrix and to support calculation of sparse correlation value between two Bragg vector point list.
 
-
 ## License Notice
 - Licensed under the GNU General Public License v3.0
 - Modified version of py4DSTEM codes are in "third_party" directory
