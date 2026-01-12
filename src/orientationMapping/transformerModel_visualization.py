@@ -8,7 +8,7 @@ from dataclasses import dataclass
 # I copied the code here so that this notebook is self-contained.  
 
 @dataclass
-class ModelConfig:
+class ModelConfig_for_visualization:
     d_embed: int
     # d_ff is the dimension of the fully-connected  feed-forward layer
     d_ff: int
@@ -24,14 +24,18 @@ class ModelConfig:
     dropout: float
     multiTask: int
 
-def make_model(config):
-    model = Transformer(config, config.num_feature).to(config.device)
+def make_model_for_visualization(config):
+    model = Transformer_for_visualization(config, config.num_feature).to(config.device)
     # initialize model parameters
     # it seems that this initialization is very important!
     for p in model.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
     return model
+
+
+### KWANG
+
 
 
 ### KWANG
@@ -186,7 +190,6 @@ class EmbedLayer(nn.Module):
         x_r = self.dropout(x_r)
         return x_r
 
-
 class MultiHeadedAttention(nn.Module):
     def __init__(self, h, d_embed, dropout=0.0):
         super(MultiHeadedAttention, self).__init__()
@@ -200,7 +203,7 @@ class MultiHeadedAttention(nn.Module):
         self.linear = nn.Linear(d_embed, d_embed)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x_query, x_key, x_value, mask=None):
+    def forward(self, x_query, x_key, x_value, mask=None, return_attn=False):
         nbatch = x_query.size(0) # get batch size
         # 1) Linear projections to get the multi-head query, key and value tensors
         # x_query, x_key, x_value dimension: nbatch * seq_len * d_embed
@@ -221,7 +224,13 @@ class MultiHeadedAttention(nn.Module):
         x = torch.matmul(p_atten, value)
         # x now has dimensions:nbtach * seq_len * d_embed
         x = x.transpose(1, 2).contiguous().view(nbatch, -1, self.d_embed)
-        return self.linear(x) # final linear layer
+        # return self.linear(x) # final linear layer
+        
+        out = self.linear(x)
+
+        if return_attn:
+            return out, p_atten  # <---- returning both
+        return out
 
 
 class ResidualConnection(nn.Module):
@@ -258,14 +267,14 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(config.dropout)
         self.norm = nn.LayerNorm(config.d_embed)
 
-    def forward(self, input, mask=None):
+    def forward(self, input, mask=None, return_attn = False):
         x = self.embed(input)
         x = self.dropout(x)
         # x = self.tok_embed(input)
         # x_pos = self.pos_embed[:, :x.size(1), :]
         # x = self.dropout(x + x_pos)
         for layer in self.encoder_blocks:
-            x = layer(x, mask)
+            x = layer(x, mask, return_attn)
         return self.norm(x)
 
 
@@ -282,15 +291,23 @@ class EncoderBlock(nn.Module):
         )
         self.residual1 = ResidualConnection(config.d_embed, config.dropout)
         self.residual2 = ResidualConnection(config.d_embed, config.dropout)
+        self.last_attn = None  # <---- define attribute here
 
-    def forward(self, x, mask=None):
-        # self-attention
-        x = self.residual1(x, lambda x: self.atten(x, x, x, mask=mask))
-        # position-wise fully connected feed-forward layer
-        return self.residual2(x, self.feed_forward)
+    def forward(self, x, mask=None, return_attn=False):
+        if return_attn:
+            # get both output and attention weights
+            attn_out, attn = self.atten(x, x, x, mask=mask, return_attn=True)
+            self.last_attn = attn
+            x = self.residual1(x, lambda _x: attn_out)
+        else:
+            # normal forward pass (ignore attention weights)
+            x = self.residual1(x, lambda _x: self.atten(_x, _x, _x, mask=mask))
+
+        x = self.residual2(x, self.feed_forward)
+        return x
 
 
-class Transformer(nn.Module):
+class Transformer_for_visualization(nn.Module):
     def __init__(self, config, num_feature):
         super().__init__()
         self.encoder = Encoder(config)
@@ -324,8 +341,8 @@ class Transformer(nn.Module):
             )
 
 
-    def forward(self, x, pad_mask=None):
-        x = self.encoder(x, pad_mask)
+    def forward(self, x, pad_mask=None, return_attn = False):
+        x = self.encoder(x, pad_mask, return_attn)
         if pad_mask is not None:
             reshaped_mask = pad_mask.reshape(pad_mask.shape[0], pad_mask.shape[-1], 1)
             reshaped_mask = torch.logical_not(reshaped_mask).float()
