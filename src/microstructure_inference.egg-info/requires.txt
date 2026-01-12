@@ -1,0 +1,17 @@
+numpy>=2.0.1
+scikit-image>=0.25.0
+pandas
+pandas>=2.2.3
+scipy>=1.15.2
+torchinfo>=1.8.0
+tqdm>=4.67.1
+seaborn>=0.13.2
+emdfile>=0.0.16
+pymatgen>=2025.4.10
+ncempy>=1.12
+dask>=2025.3.0
+colorspacious>=1.1.2
+hdf5plugin>=5.1.0
+gdown>=5.2.0
+pylops>=2.4.0
+scikit-optimize>=0.10.2

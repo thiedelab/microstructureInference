@@ -1373,3 +1373,71 @@ def generate_custom_bragg_disks_pointList(
 
     return bragg_disks_pointList, orientation_matrices_4D
 
+
+def return_predicted_rotation_matrices_in_canonical_form(crystal, predicted_rotation_matrices, cubic_proper_operation_matrices):
+    
+    total_predicted_in_canonical = []
+
+    
+    
+    
+    for idx_, predicted_rotation_matrix in enumerate(predicted_rotation_matrices):
+    
+        # print("############################################################################################################################")
+        # print("idx\n", idx_, "\n")
+
+        # print("predicted_rotation_matrix\n", predicted_rotation_matrix, "\n")
+
+        # bragg_peaks_fit_py = crystal.generate_diffraction_pattern(
+        #                     orientation_matrix = predicted_rotation_matrix,
+        #                     ind_orientation=0,
+        #                     sigma_excitation_error=sigma_compare)
+        # py4DSTEM.process.diffraction.plot_diffraction_pattern(
+        #     bragg_peaks_fit_py,
+        #     scale_markers=1000,
+        #     plot_range_kx_ky=range_plot,
+        #     min_marker_size=3,
+        #     figsize = (5,5),
+        # )
+        # plt.show()
+
+        predicted_rotation_matrix_inv = np.copy(predicted_rotation_matrix)
+        predicted_rotation_matrix_inv[:,1:] = (-1.0) * predicted_rotation_matrix_inv[:,1:] 
+
+        predicted_in_canonical = None
+
+        check_whether_proper_operation_is_true = None
+    
+        # First check just matrix
+        for proper_rotation_matrix in cubic_proper_operation_matrices:
+            matMultipled = proper_rotation_matrix @ predicted_rotation_matrix
+
+            if np.all(matMultipled[:,2] > -1e-16):
+
+                if np.abs(matMultipled[:,2][0]) <= np.abs(matMultipled[:,2][1]):
+                    if np.abs(matMultipled[:,2][1]) <= np.abs(matMultipled[:,2][2]):
+
+                        if np.abs(np.linalg.det(matMultipled) - 1) < 1e-4:
+                            check_whether_proper_operation_is_true = True
+                            predicted_in_canonical = np.copy(matMultipled)
+
+
+            elif np.all(matMultipled[:,2] < 1e-16):
+
+                if np.abs(matMultipled[:,2][0]) <= np.abs(matMultipled[:,2][1]):
+                    if np.abs(matMultipled[:,2][1]) <= np.abs(matMultipled[:,2][2]):
+                        # print("mirrored")
+                        # print("matMultipled\n", matMultipled, "\n")
+
+                        if np.abs(np.linalg.det(matMultipled) - 1) < 1e-4:
+                            check_whether_proper_operation_is_true = True
+                            predicted_in_canonical = np.copy(matMultipled)
+        
+        assert predicted_in_canonical is not None, "predicted_in_canonical is NONE!!"
+
+        total_predicted_in_canonical.append(predicted_in_canonical)
+
+    
+    total_predicted_in_canonical = np.array(total_predicted_in_canonical)
+    
+    return total_predicted_in_canonical
