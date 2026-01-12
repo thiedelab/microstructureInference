@@ -90,7 +90,7 @@ def generate_2D_IMG_array(qx,
 
     return diff2D_img
 
-def pyxem_correlation_metric(image, py4DSTEM_bragg_vecto_list, k_max, pixel_numbers, intensity_gamma_correction = 0.5):
+def Q_calculation(image, py4DSTEM_bragg_vecto_list, k_max, pixel_numbers, intensity_gamma_correction = 0.5):
     
     qx = py4DSTEM_bragg_vecto_list.data['qx']
     qy = py4DSTEM_bragg_vecto_list.data['qy']
