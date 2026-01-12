@@ -1,6 +1,6 @@
-# 4DSTEMorientationMapping
+# microstructureInference
 
-A package designed to train a model for identifying orientations of a single crystal from 4-dimensional scanning transmission electron microscopy (4D-STEM) diffraction patterns.
+A package designed to train a model for identifying structural attributes (crystallographic orientations and phases) of a single crystal from 4-dimensional scanning transmission electron microscopy (4D-STEM) diffraction patterns.
 
 ![Transformer model](./images/transformer_model.png)
 
@@ -16,7 +16,7 @@ We have made modifications and additions to the original py4DSTEM codebase to su
 ```bash
 python -m pip install .
 ```
-##### Then install torch>=2.6.0 and torchvision>=0.23.0 with CUDA build.
+##### Then install torch>=2.8.0 and torchvision>=0.23.0 with CUDA build.
 
 ###### (optional) you can run the following command to install torch, torchvision, and cuda build
 ```bash
