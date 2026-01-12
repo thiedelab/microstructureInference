@@ -11,7 +11,7 @@ import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset
 import random
-from orientationMapping.dataAugmentation import applyMirrorOperation, applyMirrorLabels
+from microstructure_inference.dataAugmentation import applyMirrorOperation, applyMirrorLabels
 
 def cubic_proper_point_group_operations():
 

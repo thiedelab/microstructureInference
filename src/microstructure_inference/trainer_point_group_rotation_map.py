@@ -1,5 +1,5 @@
-from orientationMapping.LossFunctions import pointGroup_map_rotation_prediction
-from orientationMapping.dataModules import cubic_proper_point_group_operations
+from microstructure_inference.LossFunctions import pointGroup_map_rotation_prediction
+from microstructure_inference.dataModules import cubic_proper_point_group_operations
 import torch
 import numpy as np
 from tqdm import tqdm
