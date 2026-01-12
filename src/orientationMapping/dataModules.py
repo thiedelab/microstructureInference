@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset
+import random
+from orientationMapping.dataAugmentation import applyMirrorOperation, applyMirrorLabels
 
 def cubic_proper_point_group_operations():
 
@@ -472,6 +474,22 @@ def digitize_braggIntensity(braggDisk_intensities, intensity_bins):
     return np.digitize(braggDisk_intensities, intensity_bins) - 1
 
 
+class ExpDataset(Dataset):
+    def __init__(self, data, transform=None):
+        self.data = data.long()
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.data[index]
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x
+
+    def __len__(self):
+        return len(self.data)
+
 class table_DP_for_visualization(Dataset):
     def __init__(self, input_table, transform=None):
         self.data = np.load(input_table, mmap_mode='r')
@@ -488,24 +506,7 @@ class table_DP_for_visualization(Dataset):
 
     def __len__(self):
         return len(self.data)
-    
 
-class ExpDataset(Dataset):
-    def __init__(self, data, transform=None):
-        self.data = data.long()
-        self.transform = transform
-
-    def __getitem__(self, index):
-        x = self.data[index]
-
-        if self.transform:
-            x = self.transform(x)
-
-        return x
-
-    def __len__(self):
-        return len(self.data)
-    
 
 class DataSetPointGroup_rotation(Dataset):
     def __init__(self, input_file, rot_file, angle_bin_center_num, transform=None):
@@ -563,6 +564,7 @@ def digitized_bin_centers(num_bins_radialDistance,
                           num_bins_polarAngle,
                           num_bins_braggintensity,
                           max_braggIntensity,
+                          min_braggIntensity = 0.001,
                           radial_distance_tolerance = 0.0001,
                           intensity_tolerance = 0.0001,
                           ):
@@ -574,7 +576,7 @@ def digitized_bin_centers(num_bins_radialDistance,
     angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
     angle_bins[-1] = np.pi + np.pi/360 # further change the last element
     
-    intensity_bins = np.linspace(0.0, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
+    intensity_bins = np.linspace(min_braggIntensity, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
     intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
     
     

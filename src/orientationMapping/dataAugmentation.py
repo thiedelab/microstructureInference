@@ -188,43 +188,6 @@ class RemoveBraggDisksWithWeakInten(v2.Transform):
         fractionToRemove = random.uniform(self.boundary_fractionToRemove[0], self.boundary_fractionToRemove[1])
         return self.removeWeakIntBraggDisks(inpt, fractionToRemove)
 
-# class RemoveBraggDisksWithWeakInten(v2.Transform):
-
-#     def __init__(self, fractionToRemove = 0.4):
-#         super().__init__()
-#         self.fractionToRemove = fractionToRemove
-    
-#     def removeWeakIntBraggDisks(
-#                         self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
-    
-#         idx_of_BraggDisks = torch.where(torch.sum(BraggDiskList, dim = 1) > 0)[0]
-#         numberOfBraggDisks_for_removal = int(len(idx_of_BraggDisks) * self.fractionToRemove)
-        
-#         if numberOfBraggDisks_for_removal > 1 and int(len(idx_of_BraggDisks) * (1.0 - self.fractionToRemove)) > 1:
-
-#             val_of_BD_intensity_ascending_order, indices_of_BD_intensity_ascending_order = torch.sort(BraggDiskList[idx_of_BraggDisks][:,2], descending=False)
-#             indices_of_sorted_tensor_whose_element_is_zero = torch.where(val_of_BD_intensity_ascending_order == 0)[0]
-#             permuted_indices = torch.randperm(len(indices_of_sorted_tensor_whose_element_is_zero))
-#             permuted_indices_of_sorted_tensor_whose_element_is_zero = indices_of_sorted_tensor_whose_element_is_zero[permuted_indices]
-            
-#             indices_of_BD_intensity_ascending_order[indices_of_sorted_tensor_whose_element_is_zero] = indices_of_BD_intensity_ascending_order[permuted_indices_of_sorted_tensor_whose_element_is_zero]
-            
-#             BraggDiskList_after_removal = BraggDiskList.clone().detach()
-#             BraggDiskList_after_removal[idx_of_BraggDisks[indices_of_BD_intensity_ascending_order][:numberOfBraggDisks_for_removal]] = torch.tensor([0, 0, 0])
-            
-#             idx_of_BraggDisks_after_removal = torch.where(torch.sum(BraggDiskList_after_removal, dim = 1) > 0)[0]
-#             pairs, unmatched = find_opposite_pairs_merged(BraggDiskList_after_removal[idx_of_BraggDisks_after_removal])
-            
-#             if len(unmatched) == 0:
-#                 return BraggDiskList
-#             else:
-#                 return BraggDiskList_after_removal
-#         else:
-#             return BraggDiskList
-            
-#     def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-#         return self.removeWeakIntBraggDisks(inpt)
-
 
 class uniformIntensityScaling_gaussianNoise(v2.Transform):
 
@@ -251,24 +214,6 @@ class uniformIntensityScaling_gaussianNoise(v2.Transform):
     def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         return self.uniformScale(inpt)
 
-class normalize_intensity(v2.Transform):
-
-    def __init__(self, feature_maxBinIdx = 256):
-        super().__init__()
-        self.feature_maxBinIdx = feature_maxBinIdx
-    
-    def normalizeInt(
-                        self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
-    
-        BraggDiskList_after_normalization = BraggDiskList.clone().detach()
-
-        BraggDiskList_after_normalization[:,2] = torch.clamp(torch.round((self.feature_maxBinIdx - 1) * BraggDiskList[:,2] / torch.max(BraggDiskList[:,2])).type(torch.int64), min = 0, max = self.feature_maxBinIdx - 1)
-        
-        return BraggDiskList_after_normalization
-            
-    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        return self.normalizeInt(inpt)
-
 class unify_intensity(v2.Transform):
 
     def __init__(self, feature_maxBinIdx = 256):
@@ -287,6 +232,24 @@ class unify_intensity(v2.Transform):
 
     def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
         return self.makeIntensityUniform(inpt)
+
+class normalize_intensity(v2.Transform):
+
+    def __init__(self, feature_maxBinIdx = 256):
+        super().__init__()
+        self.feature_maxBinIdx = feature_maxBinIdx
+    
+    def normalizeInt(
+                        self, BraggDiskList:torch.Tensor, ) -> torch.Tensor :
+    
+        BraggDiskList_after_normalization = BraggDiskList.clone().detach()
+
+        BraggDiskList_after_normalization[:,2] = torch.clamp(torch.round((self.feature_maxBinIdx - 1) * BraggDiskList[:,2] / torch.max(BraggDiskList[:,2])).type(torch.int64), min = 0, max = self.feature_maxBinIdx - 1)
+        
+        return BraggDiskList_after_normalization
+            
+    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
+        return self.normalizeInt(inpt)
 
 class individualIntensityScaling_gaussianNoise(v2.Transform):
 
@@ -524,9 +487,9 @@ def custom_transforms_for_Data_Aug(
                                     ):
     
     individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
-    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.80)
-    
     makeIntUniform = unify_intensity(feature_maxBinIdx = num_bins_braggintensity)
+
+    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.8)
     random_apply_int_uniform = v2.RandomApply(transforms = [makeIntUniform], p = 0.30)
 
 
@@ -545,9 +508,9 @@ def custom_transforms_for_Data_Aug(
     Displace_I = displaceFeature_GaussianNoise(feature_axis = 2, 
                                                  feature_maxBinIdx = num_bins_braggintensity, 
                                                  mean = 0.0, 
-                                                 std = 30, 
+                                                 std = 16, 
                                                  fractionToAddNoise = 0.95,
-                                                 min_clamp_index = 1)
+                                                 min_clamp_index = 0)
     
     Displace_Cart = displaceCartesian_GaussianNoise(
                                 axis_r_bins = radial_bins,
@@ -559,11 +522,12 @@ def custom_transforms_for_Data_Aug(
     random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.45)
     random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.45)
     random_apply_Displace_C =  v2.RandomApply(transforms = [Displace_Cart], p = 0.45)
-    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.90)
+    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
     
     randomly_remove_weak_BD = RemoveBraggDisksWithWeakInten(boundary_fractionToRemove=(0.05, 0.60))
-    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [randomly_remove_weak_BD], p = 0.20)
 
+    random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [randomly_remove_weak_BD], p = 0.20)
+    
     last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
     
     composed_transforms = v2.Compose([
@@ -580,116 +544,65 @@ def custom_transforms_for_Data_Aug(
     return composed_transforms
 
 
-# def custom_transforms_for_Data_Aug_no_removal(
-#                                     num_bins_radialDistance, 
-#                                     num_bins_polarAngle, 
-#                                     num_bins_braggintensity,
-#                                     radial_bins,
-#                                     radial_bin_centers,
-#                                     angle_bins,
-#                                     angle_bin_centers,
-#                                     ):
+def custom_transforms_for_Data_Aug_no_removal(
+                                    num_bins_radialDistance, 
+                                    num_bins_polarAngle, 
+                                    num_bins_braggintensity,
+                                    radial_bins,
+                                    radial_bin_centers,
+                                    angle_bins,
+                                    angle_bin_centers,
+                                    ):
     
-#     individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
-#     random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.80)
+    individ_intScaling = individualIntensityScaling_gaussianNoise(feature_maxBinIdx = num_bins_braggintensity)
+    makeIntUniform = unify_intensity(feature_maxBinIdx = num_bins_braggintensity)
+
+    random_apply_int_Scaling = v2.RandomApply(transforms = [individ_intScaling], p = 0.8)
+    random_apply_int_uniform = v2.RandomApply(transforms = [makeIntUniform], p = 0.30)
 
 
-#     Displace_R = displaceFeature_GaussianNoise(feature_axis = 0, 
-#                                                  feature_maxBinIdx = num_bins_radialDistance, 
-#                                                  mean = 0.0, 
-#                                                  std = 1.6, 
-#                                                  )
+    Displace_R = displaceFeature_GaussianNoise(feature_axis = 0, 
+                                                 feature_maxBinIdx = num_bins_radialDistance, 
+                                                 mean = 0.0, 
+                                                 std = 1.6, 
+                                                 )
 
-#     Displace_A = displaceFeature_GaussianNoise_polar(feature_axis = 1, 
-#                                                  feature_maxBinIdx = num_bins_polarAngle, 
-#                                                  mean = 0.0, 
-#                                                  std = 1.2, 
-#                                                  )
+    Displace_A = displaceFeature_GaussianNoise_polar(feature_axis = 1, 
+                                                 feature_maxBinIdx = num_bins_polarAngle, 
+                                                 mean = 0.0, 
+                                                 std = 1.2, 
+                                                 )
 
-#     Displace_I = displaceFeature_GaussianNoise(feature_axis = 2, 
-#                                                  feature_maxBinIdx = num_bins_braggintensity, 
-#                                                  mean = 0.0, 
-#                                                  std = 18, 
-#                                                  fractionToAddNoise = 0.90,
-#                                                  min_clamp_index = 1)
+    Displace_I = displaceFeature_GaussianNoise(feature_axis = 2, 
+                                                 feature_maxBinIdx = num_bins_braggintensity, 
+                                                 mean = 0.0, 
+                                                 std = 18, 
+                                                 fractionToAddNoise = 0.95,
+                                                 min_clamp_index = 1)
     
-#     Displace_Cart = displaceCartesian_GaussianNoise(
-#                                 axis_r_bins = radial_bins,
-#                                 axis_r_bin_centers = radial_bin_centers,
-#                                 axis_angle_bins = angle_bins,               
-#                                 axis_angle_bin_centers = angle_bin_centers,
-#     )
+    Displace_Cart = displaceCartesian_GaussianNoise(
+                                axis_r_bins = radial_bins,
+                                axis_r_bin_centers = radial_bin_centers,
+                                axis_angle_bins = angle_bins,               
+                                axis_angle_bin_centers = angle_bin_centers,
+    )
     
-#     random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.5)
-#     random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.5)
-#     random_apply_Displace_C =  v2.RandomApply(transforms = [Displace_Cart], p = 0.5)
-#     random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
-
-
-#     # #### REMOVE BRAGG DISKS transforms
-#     # weakBraggDiskRemoval = v2.RandomChoice([
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.05),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.10),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.15),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.20),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.25),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.30),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.35),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.40),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.45),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.50),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.55),
-#     #                                         RemoveBraggDisksWithWeakInten(fractionToRemove = 0.60),
-#     #                                         ])
-
-#     # random_apply_weakBraggDiskRemoval = v2.RandomApply(transforms = [weakBraggDiskRemoval], p = 0.20)
-
-
+    random_apply_Displace_R =  v2.RandomApply(transforms = [Displace_R], p = 0.5)
+    random_apply_Displace_A =  v2.RandomApply(transforms = [Displace_A], p = 0.5)
+    random_apply_Displace_C =  v2.RandomApply(transforms = [Displace_Cart], p = 0.5)
+    random_apply_Displace_I =  v2.RandomApply(transforms = [Displace_I], p = 0.9)
     
-#     #### ADD FALSE POSITIVES transforms
-#     # addFalsePositives01 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-#     #                                                  num_bins_polarAngle, 
-#     #                                                  num_bins_braggintensity, 
-#     #                                                  std_of_intensity = 1, 
-#     #                                                  fractionToAddBraggDisks = 0.02)
-
-#     # addFalsePositives02 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-#     #                                                  num_bins_polarAngle, 
-#     #                                                  num_bins_braggintensity, 
-#     #                                                  std_of_intensity = 1, 
-#     #                                                  fractionToAddBraggDisks = 0.03)
-
-#     # addFalsePositives03 = addFalsePositiveBraggDisks(num_bins_radialDistance, 
-#     #                                                  num_bins_polarAngle, 
-#     #                                                  num_bins_braggintensity, 
-#     #                                                  std_of_intensity = 1, 
-#     #                                                  fractionToAddBraggDisks = 0.04)
-
     
-
-#     # random_choice_of_falsePositiveAddition =  v2.RandomChoice([
-#     #                                                             addFalsePositives01,
-#     #                                                             addFalsePositives02,
-#     #                                                             addFalsePositives03,
-#     #                                                          ])
-
-
-#     # random_apply_addFalsePositives = v2.RandomApply(
-#     #                     transforms = [random_choice_of_falsePositiveAddition], 
-#     #                     p = 0.05
-#     # )
+    last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
     
-#     last_normalization_of_intensity = normalize_intensity(feature_maxBinIdx  = num_bins_braggintensity)
+    composed_transforms = v2.Compose([
+                                    random_apply_int_uniform,
+                                    random_apply_int_Scaling,
+                                    random_apply_Displace_R,
+                                    random_apply_Displace_A,
+                                    random_apply_Displace_C,
+                                    random_apply_Displace_I,
+                                    last_normalization_of_intensity,
+                                    ])
     
-#     composed_transforms = v2.Compose([
-#                                     # random_apply_weakBraggDiskRemoval,
-#                                     random_apply_int_Scaling,
-#                                     random_apply_Displace_R,
-#                                     random_apply_Displace_A,
-#                                     random_apply_Displace_C,
-#                                     random_apply_Displace_I,
-#                                     # random_apply_addFalsePositives,
-#                                     last_normalization_of_intensity,
-#                                     ])
-    
-#     return composed_transforms
+    return composed_transforms

@@ -48,6 +48,28 @@ class absolutePositionEmbedding(nn.Module):
 
     def generate_sinusoidal1D(self, sequence):
         # Denominator
+        denominator = torch.pow(5000, torch.arange(0, self.embed_dim, 2) / self.embed_dim)   # E//4                     Denominator used to produce sinusoidal equation
+        # print("denominator", denominator)
+
+        # Create an empty tensor and fill with sin and cos values as per sinusoidal embedding equation
+        pos_embedding = torch.zeros(1, sequence.shape[0], self.embed_dim)                     # 1, N, E               Used to store positional embedding for x-axis variations
+        denominator = sequence / denominator                                                  # N, 1 / (E//2)  ->  N, E//2
+        pos_embedding[:, :, ::2]  = torch.sin(denominator)                                    # Fill positional embedding's even dimensions with sin values
+        pos_embedding[:, :, 1::2] = torch.cos(denominator)                                    # Fill positional embedding's odd dimensions with cos values
+        return pos_embedding.reshape(pos_embedding.shape[1], pos_embedding.shape[2])          # return shape N, E
+
+class absolutePositionEmbedding_I(nn.Module):
+    def __init__(self, num_bins, embed_dim):
+        super().__init__()
+        self.embed_dim  = embed_dim
+
+        positions = torch.arange(num_bins).reshape(-1, 1)                       # N  ->  N, 1
+        pos_embedding = self.generate_sinusoidal1D(positions)                   # 1, N, E//2
+
+        self.register_buffer("pos_embedding", pos_embedding)                        # Register_buffer for easy switching of device
+
+    def generate_sinusoidal1D(self, sequence):
+        # Denominator
         denominator = torch.pow(10000, torch.arange(0, self.embed_dim, 2) / self.embed_dim)   # E//4                     Denominator used to produce sinusoidal equation
         # print("denominator", denominator)
 
@@ -59,7 +81,7 @@ class absolutePositionEmbedding(nn.Module):
         return pos_embedding.reshape(pos_embedding.shape[1], pos_embedding.shape[2])          # return shape N, E
 
 class directioPositionEmbedding_A(nn.Module):
-    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 17):
+    def __init__(self, angle_bin_centers, embed_dim, device, num_trainableVec = 31):
         super().__init__()
         # k = int( (num_trainableVec - 1) / 2). If num_trainableVec == 9, k = ((9 - 1) / 2) = 4
         self.embed_dim  = embed_dim
@@ -70,7 +92,7 @@ class directioPositionEmbedding_A(nn.Module):
         self.pos_embedding_learnable_sine = nn.Parameter(torch.zeros(int((num_trainableVec - 1) / 2), embed_dim), requires_grad=True)      # k, E Learnable Positional Embedding
         self.torch_cosine_angle_library = self.torch_cosine_angle_library.to(device = device)
         self.torch_sine_angle_library = self.torch_sine_angle_library.to(device = device)
-        # self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
+        self.normalization_factor = float((float(num_trainableVec) - 1.)/2.)
 
     def generate_directional_library(self, angle_bin_centers):
         torch_cosine_angle_library = []
@@ -86,7 +108,8 @@ class directioPositionEmbedding_A(nn.Module):
         ### x: B * S where B is number of batch S is number of sequence
         cosSliced = self.torch_cosine_angle_library[x]                                      ## B * S, k 
         sinSliced = self.torch_sine_angle_library[x]                                        ## B * S, k 
-        return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)+ self.pos_embedding_learnable_bias # B * S, E
+        return ((torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)) / self.normalization_factor) + self.pos_embedding_learnable_bias # B * S, E
+        # return torch.matmul(cosSliced, self.pos_embedding_learnable_cosi) + torch.matmul(sinSliced, self.pos_embedding_learnable_sine)+ self.pos_embedding_learnable_bias # B * S, E
 
 class directioPositionEmbedding_I(nn.Module):
     def __init__(self, intensity_bin_centers, embed_dim, device, num_trainableVec = 9):
@@ -125,9 +148,11 @@ class directioPositionEmbedding_I(nn.Module):
 class EmbedLayer(nn.Module):
     def __init__(self, embed_dim, angle_bin_centers, intensity_bin_centers, num_bins_radialDistance, device, dropout=0.0):
         super().__init__()
+        print("intensity_bin_centers.shape[0]\n", intensity_bin_centers.shape[0], "\n")
         self.R_embedding = absolutePositionEmbedding(num_bins_radialDistance, embed_dim)                      # 1D Sinusoidal Positional Embedding
         self.A_embedding = directioPositionEmbedding_A(angle_bin_centers, embed_dim, device)                            # directional positional embedding
-        self.I_embedding = directioPositionEmbedding_I(intensity_bin_centers, embed_dim, device)                            # directional positional embedding
+        # self.I_embedding = directioPositionEmbedding_I(intensity_bin_centers, embed_dim, device)                            # directional positional embedding
+        self.I_embedding = absolutePositionEmbedding_I(intensity_bin_centers.shape[0], embed_dim)                            # directional positional embedding
         self.layer_norm = nn.LayerNorm(embed_dim)
         self.dropout       = nn.Dropout(dropout)
         
@@ -150,7 +175,8 @@ class EmbedLayer(nn.Module):
         
         R_embedding = self.R_embedding.pos_embedding[x_r[:, 0]]                    # R_embdding: B * S, E
         A_embedding = self.A_embedding(x_r[:, 1])                                # A_embdding: B * S, E
-        I_embedding = self.I_embedding(x_r[:, 2])                                # I_embdding: B * S, E
+        I_embedding = self.I_embedding.pos_embedding[x_r[:, 2]]                    # R_embdding: B * S, E
+        # I_embedding = self.I_embedding(x_r[:, 2])                                # I_embdding: B * S, E
 
         x_r = R_embedding + A_embedding + I_embedding                              # B * S, E
         x_r = x_r.reshape(B, S, R_embedding.shape[1])                                # x : B, S, E
@@ -271,7 +297,7 @@ class Transformer(nn.Module):
         self.multiTask = config.multiTask
         self.MLP_head_0 = nn.Sequential(
             nn.Linear(config.d_embed, int(config.d_embed / 2)),
-            # nn.LayerNorm(int(config.d_embed / 2)),
+            nn.LayerNorm(int(config.d_embed / 2)),
             nn.GELU(),
             nn.Linear(int(config.d_embed / 2), int(config.d_embed / 4)),
             # nn.LayerNorm(int(config.d_embed / 4)),
@@ -286,7 +312,7 @@ class Transformer(nn.Module):
         
             self.MLP_head_1 = nn.Sequential(
                 nn.Linear(config.d_embed, int(config.d_embed / 2)),
-                # nn.LayerNorm(int(config.d_embed / 2)),
+                nn.LayerNorm(int(config.d_embed / 2)),
                 nn.GELU(),
                 nn.Linear(int(config.d_embed / 2), int(config.d_embed / 4)),
                 # nn.LayerNorm(int(config.d_embed / 4)),

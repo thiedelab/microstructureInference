@@ -60,11 +60,7 @@ def symmetric_orthogonalization(x):
     return r
 
 
-def geodesic_distance_min(
-                            outputMatrices, 
-                            TruthMatrices, 
-                            point_group_operations,
-                          ):
+def geodesic_distance_min(outputMatrices, TruthMatrices, point_group_operations):
     """
     Calculates the minimum geodesic distance between each predicted rotation matrix
     and a set of ground-truth candidate matrices.
@@ -122,7 +118,6 @@ def geodesic_distance_min(
     min_distances, _ = torch.min(geodesic_dists, dim=1)
 
     # Return the mean of these minimum distances as the loss
-    
     return torch.mean(min_distances, dtype=torch.float32)
 
 def geodesic_distance_min_return_entire_geodesic_stack(

@@ -62,7 +62,7 @@ def train_epoch(model, dataloader, optimizer, device, point_group_op_matrices, P
             pbar.set_description(f'train loss={loss.item():.4f}')
     return np.mean(losses)
 
-def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch, device, file_path, PAD = 0, start_epoch = 0, save_interval = 10, best_valid_loss = 1000.0):
+def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch, device, file_path, PAD = 0, start_epoch = 0, save_interval = 5, best_valid_loss = 1000.0):
     point_group_op_matrices = cubic_proper_point_group_operations()
     point_group_op_matrices = point_group_op_matrices.to(device)
     train_error = []
@@ -82,7 +82,7 @@ def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, co
         print(f'ep {ep}: val_loss={val_loss:.4f}')
 
         valid_error.append(val_loss)
-        
+
         # update scheduler
         if ep < num_warmup_epochs:
             linear_warmup.step()
@@ -90,6 +90,13 @@ def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, co
         else:
             cos_decay.step()
             print("cos_decay.get_last_lr()", cos_decay.get_last_lr())
+            # if ep < cos_decay_epoch + num_warmup_epochs:
+            #     cos_decay.step()
+            #     print("cos_decay.get_last_lr()", cos_decay.get_last_lr())
+            # else:
+            #     for param_group in optimizer.param_groups:
+            #         print("learning rate: ", param_group['lr'])
+                    
         
         # save checkpoint
         if val_loss < best_valid_loss:
@@ -98,12 +105,11 @@ def train(model, train_loader, test_loader, epochs, optimizer, linear_warmup, co
             print("")
             print("ep", ep, " val_loss", val_loss, ", new best model saved")
             print("")
-
+            
             best_valid_loss = val_loss
 
         the_most_recent_model_path = os.path.join(file_path, "last_updated_model.pth")
         save_checkpoint(model, optimizer, linear_warmup, cos_decay, ep, the_most_recent_model_path)
-
     return train_error, valid_error
         
 def evaluate(model, dataloader, device, point_group_op_matrices, PAD):
