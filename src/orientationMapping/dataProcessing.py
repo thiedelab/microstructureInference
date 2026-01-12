@@ -755,6 +755,7 @@ def process_pandas_tabular_data(
                                 max_sequence_length,
                                 max_radial_distance,
                                 max_braggIntensity,
+                                min_braggIntensity = 0.001,
                                 radial_distance_tolerance = 0.0001,
                                 intensity_tolerance = 0.0001,
                                 ):
@@ -767,7 +768,7 @@ def process_pandas_tabular_data(
     angle_bin_centers = (angle_bins[:-1] + angle_bins[1:]) / 2
     angle_bins[-1] = np.pi + np.pi/360 # further change the last element
 
-    intensity_bins = np.linspace(0.0, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
+    intensity_bins = np.linspace(min_braggIntensity, max_braggIntensity + (intensity_tolerance), num_bins_braggintensity + 1)
     intensity_bin_centers = (intensity_bins[:-1] + intensity_bins[1:]) / 2
 
 
