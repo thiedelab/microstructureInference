@@ -1166,9 +1166,6 @@ def read_4D(fname, trim_meta = True):
 
         columns = 128    
         rows = 130
-
-        # print("dp.shape", dp.shape)
-            
         sqpix = dp.size/columns/rows
         #Assuming square scan, i.e. same number of x and y scan points
         pix = int(sqpix**(0.5))
@@ -1179,11 +1176,6 @@ def read_4D(fname, trim_meta = True):
         # The meta data is for EMPAD debugging, 
         # and generally doesn't need to be kept.
         if trim_meta:
-            # dp = dp[:,:,0:128,:]
-            # print("dp[:,:,128:,:].shape", dp[:,:,128:,:].shape, "\n")
-            # print("dp[:,:,128:,:]\n", dp[:,:,128:,:], "\n")
-            # print("dp[:,:,128,:]\n", dp[:,:,128,:], "\n")
-            # print("dp[:,:,129,:]\n", dp[:,:,129,:], "\n")
             dp = dp[:,:,:128,:]
 
     ## Read 4D data from .mat file
@@ -1640,3 +1632,25 @@ def detect_Bragg_Disks_in_4DSTEM_data_normalize_intensity(aligned_data,
     print("calibration complete.\n")
         
     return bragg_peaks
+
+def alignment(cbed_data):
+
+    '''
+
+    Align the diffraction patterns through the Center of mass of the center beam
+    '''
+
+    x, y, kx, ky = np.shape(cbed_data)
+    com_x, com_y = quickCOM(cbed_data) # need to add
+    cbed_tran    = np.zeros((x, y, kx, ky))
+    
+    for i in range(x):
+        for j in range(y):
+            afine_tf = transform.AffineTransform(translation=(-kx//2+com_x[i,j], -ky//2+com_y[i,j]))
+            cbed_tran[i,j,:,:] = transform.warp(cbed_data[i,j,:,:], inverse_map=afine_tf)
+        sys.stdout.write('\r %d,%d' % (i, j) + ' '*10)
+    com_x2, com_y2 = quickCOM(cbed_tran)
+    std_com = (np.std(com_x2), np.std(com_y2))
+    mean_com = (np.mean(com_x2), np.mean(com_y2))
+    
+    return cbed_tran, mean_com, std_com
