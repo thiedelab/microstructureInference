@@ -8,54 +8,21 @@ Created on Thu Jan  1 14:11:33 2026
 
 import numpy as np
 
-from typing import Union, Optional
-from tqdm import tqdm
-
-from emdfile import tqdmnd, PointList, PointListArray
-from py4DSTEM.data import RealSlice
-from py4DSTEM.process.diffraction.utils import Orientation, OrientationMap, axisEqual3D
+from typing import Union
+from emdfile import tqdmnd, PointList
+from py4DSTEM.process.diffraction.utils import Orientation
 from py4DSTEM.process.utils import electron_wavelength_angstrom
-
 import py4DSTEM
-import numpy as np
 import matplotlib.pyplot as plt
-import h5py
 
-import torch
 # from chamferdist import ChamferDistance
 from py4DSTEM.data import QPoints
-from py4DSTEM.preprocess.utils import get_maxima_2D
-
-from py4DSTEM import BraggVectors
-from py4DSTEM.braggvectors.braggvectors import BVects
-from py4DSTEM.data import QPoints
-from py4DSTEM.process.diffraction.crystal_ACOM import match_single_pattern
-from py4DSTEM.process.diffraction.utils import Orientation, OrientationMap
-
-pixel_size = 0.0328
-# pixel_size = 0.03158073
-sigma_compare = 0.02
-pixel_numbers = 128
-
-k_max = pixel_size * pixel_numbers / 2.
-accelerating_voltage = int(300e3)
 
 
-displace_sigma = 0.029
-# displace_sigma = 0.1
-accelerating_voltage = 300e3
-np.random.seed(5)
-diffraction_space_pixel_size = 0.0328
-scan_x_dim = 1
-scan_y_dim = 1
-recip_x_dim, recip_y_dim = 128, 128
-bragg_disks_pointList = BraggVectors((scan_x_dim, scan_y_dim), (recip_x_dim, recip_y_dim))
-range_plot = np.array([k_max+0.1,k_max+0.1])
-# Set calibration parameters
-bragg_disks_pointList.calibration.set_Q_pixel_size(diffraction_space_pixel_size)
-bragg_disks_pointList.calibration.set_Q_pixel_units('A^-1')
-bragg_disks_pointList.setcal()
-sigma_compare = 0.02
+try:
+    import cupy as cp
+except (ModuleNotFoundError, ImportError):
+    cp = None
 
 orientation_ranges = {
     "1": ["fiber", [0, 0, 1], [180.0, 360.0]],
@@ -95,6 +62,113 @@ orientation_ranges = {
     "-43m": [[[1, -1, 1], [1, 1, 1]], None, None],
     "m-3m": [[[0, 1, 1], [1, 1, 1]], None, None],
 }
+
+
+def generate_2D_IMG_array(qx,
+                          qy,
+                          intensity,
+                          k_max,
+                          pixel_numbers,
+                          remove_direct_beam = True,
+                          corner_centered = False,
+                          position_tolerance = 1e-14,
+                             ):
+    """
+    Map py4DSTEM pointList object to 2D diffraction pattern array
+
+    Args:            
+        corner_centered: (boolean)
+            boolean variable that determines whether to set the location of
+            direct beam (qx, qy) = (0, 0) to corner of 2D numpy array of 
+            diffraction image (diff2D_img) at index [0][0]. If True, 
+            direct beam (qx, qy) = (0, 0) is located at the corner of 
+            diff2D_img at index[0][0]. If False, direct beam (qx, qy) = (0, 0)
+            is located at the center of 2D numpy array
+            default: False
+
+        remove_direct_beam: (boolean)
+            boolean variable that directs whether to remove
+            direct beam or not.
+            Default is False
+
+    Additional attributes:
+        indices_of_qx_in_diff2d_img:
+            indices of pixels of qx of Bragg peaks    
+            
+        indices_of_qy_in_diff2d_img:
+            indices of pixels of qy of Bragg peaks
+
+    returns:
+          diff2D_img: 2D array of Bragg peaks 
+          (shape: ($pixel_numbers$, $pixel_numbers$))
+    """
+
+    qx_refined = np.copy(qx)
+    qy_refined = np.copy(qy)
+    intensity_refined = np.copy(intensity)
+    mask = None
+
+    if remove_direct_beam:            
+        mask = np.full((len(intensity)), True)
+        radial_distances = np.linalg.norm(np.stack((qx,qy)).T, axis = 1)
+        index_of_direct_beam = np.argmin(radial_distances)
+        mask[index_of_direct_beam] = False
+        qx_refined = qx_refined[mask]
+        qy_refined = qy_refined[mask]
+        intensity_refined = intensity_refined[mask]
+        
+    qx_refined[np.where(np.abs(qx_refined[:]) < (position_tolerance))[0]] = 0.0
+    qy_refined[np.where(np.abs(qy_refined[:]) < (position_tolerance))[0]] = 0.0
+
+    stack_qxqy = np.stack((qx_refined, qy_refined), axis = 1)
+    width_of_diff2D_img = k_max * 2.0
+    pixel_size = width_of_diff2D_img / pixel_numbers
+
+    if pixel_numbers % 2 == 0:
+        pixel_bins = np.arange(-k_max, k_max + pixel_size, pixel_size) # change
+        pixel_bins[np.where(np.abs(pixel_bins[:]) < (position_tolerance))[0]] = 0.0 # change
+        
+        
+        digitized_bin = np.digitize(stack_qxqy, pixel_bins) - 1
+    else:
+        pixel_bins = np.linspace(-k_max - pixel_size/2.0, 
+                                 k_max + pixel_size/2.0, 
+                                 pixel_numbers + 1, endpoint = True)
+        digitized_bin = np.digitize(stack_qxqy, pixel_bins) - 1
+
+
+    diff2D_img = np.zeros((pixel_numbers, pixel_numbers))
+    diff2D_img[digitized_bin[:,0],digitized_bin[:,1]] = intensity_refined
+
+    if corner_centered:
+        diff2D_img = np.roll(diff2D_img, (-int(pixel_numbers / 2), -int(pixel_numbers / 2)), axis=(0, 1))
+
+    return diff2D_img
+
+def Q_calculation(image, py4DSTEM_bragg_vecto_list, k_max, pixel_numbers, intensity_gamma_correction = 0.5):
+    
+    qx = py4DSTEM_bragg_vecto_list.data['qx']
+    qy = py4DSTEM_bragg_vecto_list.data['qy']
+    intensity = py4DSTEM_bragg_vecto_list.data['intensity']
+    
+    if intensity_gamma_correction is not None:
+        image = image ** intensity_gamma_correction;
+    
+    kinematic_diffraction_pattern_2D = generate_2D_IMG_array(
+                                                qx,
+                                                qy,
+                                                intensity,
+                                                k_max,
+                                                pixel_numbers,
+                                                )
+    
+    kinematic_diffraction_pattern_2D = kinematic_diffraction_pattern_2D / np.sqrt(np.sum(np.square(kinematic_diffraction_pattern_2D)))
+    
+    experimen_diffraction_pattern_2D = image / np.sqrt(np.sum(np.square(image)))
+    
+    correlation_score_Q = np.sum(np.multiply(kinematic_diffraction_pattern_2D,experimen_diffraction_pattern_2D))
+    
+    return correlation_score_Q
 
 def geodesic_distance_SO3(R1, R2):
     """
@@ -170,7 +244,7 @@ def calculate_rotation_matrix_for_zone_axis(zone_axis):
 
     return new_rotation_matrix
 
-def returnBPVEC(crystal_1, orientation_matrix, draw_inverse_as_well = False):
+def returnBPVEC(crystal_1, orientation_matrix, displace_sigma = 0.1, excitation_errors = 0.02, draw_inverse_as_well = False):
 
     orientation_matrix_canonical = np.copy(orientation_matrix)
 
@@ -191,7 +265,7 @@ def returnBPVEC(crystal_1, orientation_matrix, draw_inverse_as_well = False):
     bragg_peaks_fit = crystal_1.generate_diffraction_pattern(
                                 orientation_matrix = orientation_matrix_canonical,
                                 ind_orientation=0,
-                                sigma_excitation_error=sigma_compare)
+                                sigma_excitation_error=excitation_errors)
             
     qx = np.copy(bragg_peaks_fit.data['qx'])
     qy = np.copy(bragg_peaks_fit.data['qy'])
@@ -1789,7 +1863,7 @@ def measure_sparseCorr_of_single_pattern(
             try:
                 v = [np.cos(phi), np.sin(phi), 0]
             except RuntimeWarning:
-                print(f"RuntimeWarning at iteration {i}, phi = {phi}")
+                print(f"RuntimeWarning at iteration, phi = {phi}")
                 # print("corr_in_plane_angle_keep[ind_best_fit]\n", corr_in_plane_angle_keep[ind_best_fit], "\n")
                 # print()
                 break
