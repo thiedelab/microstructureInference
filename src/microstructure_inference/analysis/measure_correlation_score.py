@@ -2291,3 +2291,248 @@ def measure_sparseCorr_of_single_pattern(
         return orientation, fig, ax, final_corr_value
     else:
         return orientation, final_corr_value
+
+
+def zone_axis_local_correlation_map(Z_field, real_space_grain_index, index_of_crystal=1, window_radius=2):
+    """
+    Compute local correlation map for zone-axis unit vectors, 
+    EXCLUDING the correlation of the center pixel with itself.
+    """
+    H, W, _ = Z_field.shape
+    local_corr = np.full((H, W), np.nan, dtype=np.float64)
+    mask = (real_space_grain_index == index_of_crystal)
+
+    for i in range(H):
+        for j in range(W):
+            if not mask[i, j]:
+                continue
+
+            # 1. Define local window bounds
+            i_min = max(0, i - window_radius)
+            i_max = min(H, i + window_radius + 1)
+            j_min = max(0, j - window_radius)
+            j_max = min(W, j + window_radius + 1)
+
+            # 2. Get the local mask identifying all crystal pixels in the window
+            local_mask = mask[i_min:i_max, j_min:j_max]
+
+            # print("local_mask\n", local_mask)
+            # print("local_mask.shape\n", local_mask.shape)
+            
+            # 3. Create a secondary mask to EXCLUDE the center pixel (i, j)
+            # Find center index within the local window (i_max-i_min, j_max-j_min)
+            center_row = i - i_min
+            center_col = j - j_min
+
+            # print("")
+            # print("i", i)
+            # print("j", j)
+            # print("center_row", center_row)
+            # print("center_col", center_col)
+            
+            # The local_mask already identifies all crystal pixels, including the center.
+            # We create a 'neighbor_only' mask by copying the local_mask and setting 
+            # the center position to False.
+            neighbor_only_mask = local_mask.copy()
+            neighbor_only_mask[center_row, center_col] = False 
+            
+            # 4. Extract the true neighbor vectors
+            # V_window is the whole window slice of the Z_field
+            V_window = Z_field[i_min:i_max, j_min:j_max]
+            v_neighbors = V_window[neighbor_only_mask]
+
+            # print("v_neighbors.shape", v_neighbors.shape)
+            
+            # 5. Check: If there are no valid neighbors, assign NaN and skip.
+            # This handles isolated pixels and edge cases where the only crystal 
+            # pixel in the window is the center itself.
+            if v_neighbors.size == 0:
+                continue 
+
+            # 6. Perform correlation calculation
+            v_center = Z_field[i, j]
+
+            # Compute cosine of angle (dot product) between center and ONLY neighbors
+            cos_thetas = np.dot(v_neighbors, v_center)
+            cos_thetas = np.clip(cos_thetas, -1.0, 1.0)
+            
+            # The local correlation is the mean of the cosines with true neighbors
+            local_corr[i, j] = cos_thetas.mean()
+
+    return local_corr
+
+
+def zone_axis_autocorrelation_map_masked(Z_field_i, real_space_grain_index, index_of_crystal=1):
+    """
+    Compute 2D autocorrelation map for a field of zone-axis unit vectors (3D),
+    using dot products (cosine of angle), only over pixels in the chosen grain.
+
+    Parameters
+    ----------
+    Z_field : ndarray, shape (H, W, 3)
+        Zone-axis vectors (each normalized to length 1).
+    real_space_grain_index : ndarray, shape (H, W)
+        Integer labels for grains or background.
+    index_of_crystal : int, optional
+        Grain index for which to compute correlation (default=1).
+
+    Returns
+    -------
+    corr_map : ndarray, shape (2H-1, 2W-1)
+        Global two-point correlation map averaged over valid pairs.
+        corr_map[H-1+di, W-1+dj] = average dot(Z_ij, Z_{i+di,j+dj})
+    """
+    H, W, _ = Z_field_i.shape
+    corr_map = np.zeros((2 * H - 1, 2 * W - 1), dtype=np.float64)
+    
+    mask = (real_space_grain_index == index_of_crystal)
+
+    # Ensure normalization (in case of small numerical drift)
+
+    Z_field = Z_field_i.copy()
+    norm = np.linalg.norm(Z_field, axis=-1, keepdims=True)
+    
+    # Normalize only where mask is True
+    Z_field[mask] /= norm[mask]
+
+    # Iterate over all spatial offsets
+    for di in range(-H + 1, H):
+        for dj in range(-W + 1, W):
+
+            # Overlapping regions
+            i1 = slice(max(0, -di), min(H, H - di))
+            j1 = slice(max(0, -dj), min(W, W - dj))
+            i2 = slice(max(0, di), min(H, H + di))
+            j2 = slice(max(0, dj), min(W, W + dj))
+
+            mask1 = mask[i1, j1]
+            mask2 = mask[i2, j2]
+            valid_mask = mask1 & mask2
+
+            if not np.any(valid_mask):
+                continue
+
+            Z1 = Z_field[i1, j1][valid_mask]
+            Z2 = Z_field[i2, j2][valid_mask]
+
+            # Compute dot products between corresponding vectors
+            corr_vals = np.einsum('ni,ni->n', Z1, Z2)
+
+            corr_map[H - 1 + di, W - 1 + dj] = corr_vals.mean()
+
+    return corr_map
+
+def zone_axis_cross_correlation_map_masked(Z_field_1_i, Z_field_2_i, real_space_grain_index, index_of_crystal=1):
+    """
+    Compute 2D cross-correlation map between two fields of zone-axis unit vectors (3D),
+    using dot products (cosine of angle), only over pixels in the chosen grain.
+
+    Parameters
+    ----------
+    Z_field_1 : ndarray, shape (H, W, 3)
+        First zone-axis vector field (each normalized to length 1).
+    Z_field_2 : ndarray, shape (H, W, 3)
+        Second zone-axis vector field (same shape as Z_field_1).
+    real_space_grain_index : ndarray, shape (H, W)
+        Integer labels for grains or background.
+    index_of_crystal : int, optional
+        Grain index for which to compute correlation (default=1).
+
+    Returns
+    -------
+    corr_map : ndarray, shape (2H-1, 2W-1)
+        Global two-point cross-correlation map averaged over valid pairs.
+        corr_map[H-1+di, W-1+dj] = average dot(Z1_ij, Z2_{i+di,j+dj})
+    """
+    H, W, _ = Z_field_1_i.shape
+    corr_map = np.zeros((2 * H - 1, 2 * W - 1), dtype=np.float64)
+    
+    mask = (real_space_grain_index == index_of_crystal)
+
+    # Copy fields to avoid modifying original
+    Z_field_1 = Z_field_1_i.copy()
+    Z_field_2 = Z_field_2_i.copy()
+    
+    # Compute norms only for valid pixels
+    norm1 = np.linalg.norm(Z_field_1, axis=-1, keepdims=True)
+    norm2 = np.linalg.norm(Z_field_2, axis=-1, keepdims=True)
+    
+    # Normalize only where mask is True
+    Z_field_1[mask] /= norm1[mask]
+    Z_field_2[mask] /= norm2[mask]
+
+
+    # Iterate over all spatial offsets
+    for di in range(-H + 1, H):
+        for dj in range(-W + 1, W):
+
+            # Overlapping regions
+            i1 = slice(max(0, -di), min(H, H - di))
+            j1 = slice(max(0, -dj), min(W, W - dj))
+            i2 = slice(max(0, di), min(H, H + di))
+            j2 = slice(max(0, dj), min(W, W + dj))
+
+            mask1 = mask[i1, j1]
+            mask2 = mask[i2, j2]
+            valid_mask = mask1 & mask2
+
+            if not np.any(valid_mask):
+                continue
+
+            Z1 = Z_field_1[i1, j1][valid_mask]
+            Z2 = Z_field_2[i2, j2][valid_mask]
+
+            # Compute dot products between corresponding vectors
+            corr_vals = np.einsum('ni,ni->n', Z1, Z2)
+
+            corr_map[H - 1 + di, W - 1 + dj] = corr_vals.mean()
+
+    return corr_map
+
+def radial_average_corrMap(data, nbins=60, include_center=True):
+    if data.shape[0] != data.shape[1]:
+        raise ValueError("Input array must be square")
+
+    N = data.shape[0]
+    center = (N // 2, N // 2)
+
+    # 1. Calculate radial distance (r) for every point
+    y, x = np.indices(data.shape)
+    r = np.sqrt((x - center[1])**2 + (y - center[0])**2)
+
+    r = r.flatten()
+    data_flat = data.flatten()
+
+    # 2. Handle center exclusion
+    if not include_center:
+        # Create a mask to exclude the center point (where r=0)
+        mask = r > 0
+        r = r[mask]
+        data_flat = data_flat[mask]
+
+    # --- FIX APPLIED HERE ---
+    # 3. Define the bin range based on the potentially masked data
+    r_min, r_max = r.min(), r.max()
+    bins = np.linspace(r_min, r_max, nbins + 1)
+    # ------------------------
+
+    # 4. Bin the radii
+    bin_indices = np.digitize(r, bins) - 1
+    
+    # Handle the edge case where r = r_max, mapping it to the last bin
+    bin_indices[bin_indices == nbins] = nbins - 1
+    # Ensure indices are within bounds (0 to nbins-1)
+    bin_indices[bin_indices < 0] = 0
+
+    radial_profile = np.zeros(nbins)
+    counts = np.zeros(nbins)
+
+    # 5. Calculate sum and count for each bin
+    np.add.at(radial_profile, bin_indices, data_flat)
+    np.add.at(counts, bin_indices, 1)
+
+    # 6. Calculate the average
+    radial_profile /= np.maximum(counts, 1)
+    radial_centers = 0.5 * (bins[:-1] + bins[1:])
+
+    return radial_centers, radial_profile
