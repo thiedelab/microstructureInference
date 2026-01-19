@@ -21,6 +21,36 @@ import py4DSTEM
 from scipy.optimize import linprog
 from scipy.ndimage import gaussian_filter
 
+def calculate_rotation_matrix_for_zone_axis(zone_axis):
+    elev = np.arctan2(
+        np.hypot(zone_axis[0], zone_axis[1]),
+        zone_axis[2],
+    )
+    
+    azim = np.arctan2(zone_axis[0], zone_axis[1])
+
+    new_rotation_matrix = rotation_wrt_zAxis(azim) @ rotation_wrt_xAxis(elev) @ rotation_wrt_zAxis(-azim)
+
+
+    return new_rotation_matrix
+
+def rotation_wrt_zAxis(angle_in_rad):
+    return np.array([
+                        [np.cos(angle_in_rad), np.sin(angle_in_rad), 0],
+                        [-np.sin(angle_in_rad), np.cos(angle_in_rad), 0],
+                        [0, 0, 1]
+                    ]
+                    )
+
+def rotation_wrt_xAxis(angle_in_rad):
+    return np.array(
+                    [
+                        [1, 0, 0],
+                        [0, np.cos(angle_in_rad), np.sin(angle_in_rad)],
+                        [0, -np.sin(angle_in_rad), np.cos(angle_in_rad)],
+                    ]
+                    )
+
 def _subtract_dog(frame, min_sigma=1, max_sigma=55):
     """Background removal using difference of Gaussians.
     
