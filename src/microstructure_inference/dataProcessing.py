@@ -1575,3 +1575,23 @@ def alignment(cbed_data):
     mean_com = (np.mean(com_x2), np.mean(com_y2))
     
     return cbed_tran, mean_com, std_com
+
+def generate_random_colormap(num_colors=20, background_color=(0, 0, 0)):
+    """
+    Generate a matplotlib ListedColormap with `num_colors` random colors,
+    and optionally add a background color at index 0.
+    
+    Parameters:
+        num_colors (int): Number of random colors (for grains).
+        background_color (tuple): RGB tuple for background (index 0).
+    
+    Returns:
+        ListedColormap: Colormap object for use in matplotlib.
+    """
+    rng = np.random.default_rng(seed=12)  # For reproducibility
+    random_colors = rng.uniform(0.1, 0.9, size=(num_colors, 3))  # Avoid too dark/light
+
+    # Prepend background color at index 0
+    all_colors = np.vstack([background_color, random_colors])
+    
+    return ListedColormap(all_colors)
