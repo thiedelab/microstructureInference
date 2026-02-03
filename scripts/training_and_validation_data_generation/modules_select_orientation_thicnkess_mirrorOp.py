@@ -387,9 +387,7 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
         lower_limit_unit_cell_num,
         upper_limit_unit_cell_num,
         k_max,
-        zone_axes,
-        excitation_error,
-        intensity_threshold_for_each_Bragg_disk,
+        intensity_threshold_for_each_Bragg_disk = 4e-3,
         intensity_threshold_for_disregarding_patterns_with_small_average_intensity = 1e-5,
         ):
     
@@ -399,7 +397,10 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
     thickness_upper_limit = unit_cell_length * upper_limit_unit_cell_num
     thickness_num_for_sampling = upper_limit_unit_cell_num - lower_limit_unit_cell_num + 1
     thicknesses = np.linspace(thickness_lower_limit, thickness_upper_limit, thickness_num_for_sampling)
-        
+    
+    ####
+    zone_axes = crystal.orientation_vecs;########################################################################################################################################################### RRRR
+    
     
     total_unique_thicknesses = []
     total_average_intensities = []
@@ -414,7 +415,7 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
     
         beams = crystal.generate_diffraction_pattern(
                                     orientation_matrix = orientation_matrix,
-                                    sigma_excitation_error = excitation_error,
+                                    sigma_excitation_error = 0.04,
                                     tol_intensity = 0.0,
                                     k_max = k_max,
         )
@@ -503,9 +504,9 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
         
         # print("np.where(np.array(average_intensity_collection) <1e-6)[0]\n",np.where(np.array(average_intensity_collection) <1e-6)[0])
         # print("np.min(np.array(average_intensity_collection))", np.min(np.array(average_intensity_collection)))            
-        # print("number of sampled thickness for given zone axis:", len(unique_thickness_given_pattern))
-        # print("maximum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.max(np.array(number_of_Bragg_disks)))
-        # print("minimum number of Bragg disks within a circle with radius ", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, ": ", np.min(np.array(number_of_Bragg_disks)))
+        print("number of sampled thickness for given zone axis:", len(unique_thickness_given_pattern))
+        print("maximum number of Bragg disks within a circle with radius ", k_max, " and above threshold 4e-3: ", np.max(np.array(number_of_Bragg_disks)))
+        print("minimum number of Bragg disks within a circle with radius ", k_max, " and above threshold 4e-3: ", np.min(np.array(number_of_Bragg_disks)))
         
         total_maximum_number_of_Bragg_disks.append(np.max(np.array(number_of_Bragg_disks)))
         total_unique_thicknesses.append(unique_thickness_given_pattern)
@@ -514,8 +515,7 @@ def action_01_collect_unique_thickness_for_each_zone_axis(
     
     print("")
     total_maximum_number_of_Bragg_disks = np.array(total_maximum_number_of_Bragg_disks)
-    # print("For ", len(zone_axes), " zone axes, maximum number of Bragg disks in a pattern within a circle with radius", k_max, " and above threshold", intensity_threshold_for_each_Bragg_disk, " is", np.max(total_maximum_number_of_Bragg_disks))
-    print("")
+    print("For ", len(zone_axes), " zone axes, maximum number of Bragg disks in a pattern within a circle with radius", k_max, " and above threshold 4e-3 is", np.max(total_maximum_number_of_Bragg_disks))
         
         
             
@@ -683,9 +683,7 @@ def action_06_check_symmetry_for_each_ZA_each_thickness(
         zone_axes,
         final_sampled_thickness_for_each_zone_axis_summary,
         k_max,
-        excitation_error,
-        intensity_threshold_for_each_Bragg_disk,
-        intensity_threshold_for_disregarding_patterns_with_small_average_intensity = 1e-5,
+        intensity_threshold_for_each_Bragg_disk = 4e-3,
         ):
     
     zone_axis_001 = np.array([0., 0., 1.0])
@@ -707,7 +705,7 @@ def action_06_check_symmetry_for_each_ZA_each_thickness(
     
         beams = crystal.generate_diffraction_pattern(
                                     orientation_matrix = orientation_matrix,
-                                    sigma_excitation_error = excitation_error,
+                                    sigma_excitation_error = 0.04,
                                     tol_intensity = 0.0,
                                     k_max = k_max,
         )
@@ -812,108 +810,6 @@ def action_06_check_symmetry_for_each_ZA_each_thickness(
     
     return per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation
     
-
-def action_06_check_symmetry_for_each_ZA_each_thickness_monoclinic(
-        crystal,
-        zone_axes,
-        final_sampled_thickness_for_each_zone_axis_summary,
-        k_max,
-        excitation_error,
-        intensity_threshold_for_each_Bragg_disk,
-        intensity_threshold_for_disregarding_patterns_with_small_average_intensity = 1e-5,
-        ):
-    
-    
-    per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation = {}
-    
-    for zone_axis_idx, zone_axis in enumerate(zone_axes):
-        per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation[zone_axis_idx] = {}
-        thicknesses_for_current_zone_axis = final_sampled_thickness_for_each_zone_axis_summary[zone_axis_idx]
-            
-        # print("thicknesses_for_current_zone_axis\n", thicknesses_for_current_zone_axis)
-    
-        orientation_matrix = calculate_rotation_matrix_for_zone_axis(zone_axis)
-    
-        beams = crystal.generate_diffraction_pattern(
-                                    orientation_matrix = orientation_matrix,
-                                    sigma_excitation_error = excitation_error,
-                                    tol_intensity = 0.0,
-                                    k_max = k_max * 6.,
-        )
-        
-        dynamic_patterns = crystal.generate_dynamical_diffraction_pattern(
-                            beams = beams,
-                            orientation_matrix = orientation_matrix,
-                            thickness=thicknesses_for_current_zone_axis,
-                        )
-        
-        thickness_collection = []
-        isMirror_collection = []
-        UpperBound_for_angle_collection = []
-        
-    
-        for enIdx, pattern in enumerate(dynamic_patterns):
-    
-            qx = np.copy(pattern.data['qx'])
-            qy = np.copy(pattern.data['qy'])
-            intensity = np.copy(pattern.data['intensity'])
-    
-            initial_radial_distance = np.linalg.norm(np.stack((qx,qy)).T, axis = 1)    
-            index_of_direct_beam = np.argmin(initial_radial_distance)
-            qx = np.delete(qx, index_of_direct_beam)
-            qy = np.delete(qy, index_of_direct_beam)
-            intensity = np.delete(intensity, index_of_direct_beam)
-            intensity_normalized = intensity / np.max(intensity)
-    
-    
-            indices_where_intensity_below_threshold = np.where(intensity_normalized < intensity_threshold_for_each_Bragg_disk)[0]
-            qx = np.delete(qx, indices_where_intensity_below_threshold)
-            qy = np.delete(qy, indices_where_intensity_below_threshold)
-            # intensities_of_Bragg_disks = np.delete(intensity, indices_where_intensity_below_threshold)
-                
-            if len(qx) > 1:
-                positions_of_Bragg_disks = np.stack((qx, qy)).T
-                k_radial_distnaces_of_BPs = np.linalg.norm(positions_of_Bragg_disks, axis = 1)
-    
-                indices_where_cartesian_is_smaller_than_k_max_square = np.intersect1d(np.where(np.abs(positions_of_Bragg_disks[:,0]) < k_max)[0], np.where(np.abs(positions_of_Bragg_disks[:,1]) < k_max)[0])
-                indices_where_radial_distance_smaller_than_k_max = np.where(k_radial_distnaces_of_BPs < k_max)[0]
-                indices_where_radial_distance_smaller_than_k_max = np.intersect1d(indices_where_radial_distance_smaller_than_k_max, indices_where_cartesian_is_smaller_than_k_max_square)
-    
-                if len(indices_where_radial_distance_smaller_than_k_max) > 1:
-    
-                    
-    
-                    
-    
-                    final_qx = qx[indices_where_radial_distance_smaller_than_k_max]
-                    final_qy = qy[indices_where_radial_distance_smaller_than_k_max]
-                    # final_intensities_of_Bragg_disks = intensities_of_Bragg_disks[indices_where_radial_distance_smaller_than_k_max]
-    
-                    BRAGG_DISKS_LIST_2D_CART_COORDS = np.stack((final_qx, final_qy)).T
-    
-                    
-                    hasMirrorSymmetry = is_MirrorSymmetric(BRAGG_DISKS_LIST_2D_CART_COORDS)
-                    hasRotationSymmetry = has_2fold_rotational_symmetry(BRAGG_DISKS_LIST_2D_CART_COORDS)
-                    
-                    hasMirrorSymmetry = int(hasMirrorSymmetry)
-
-                    if hasRotationSymmetry:
-                        upper_bound_for_in_plane_rotation_angle = int(180)
-                    else:
-                        upper_bound_for_in_plane_rotation_angle = int(360)
-    
-                    for rep_count in range(int(360 / upper_bound_for_in_plane_rotation_angle)):
-                        thickness_collection.append(thicknesses_for_current_zone_axis[enIdx])
-                        isMirror_collection.append(hasMirrorSymmetry)
-                        UpperBound_for_angle_collection.append(upper_bound_for_in_plane_rotation_angle)
-    
-
-        per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation[zone_axis_idx]['thickness'] = np.array(thickness_collection)
-        per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation[zone_axis_idx]['isMirror'] = isMirror_collection
-        per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation[zone_axis_idx]['InPlaneAngleUpperBound'] = UpperBound_for_angle_collection
-    
-    return per_zone_axis_per_thickness_checkMirrorSymmetry_and_upperBound_for_inPlangeRotation
-
 
 def action_07_generate_dictionary_of_orientation_thickness_and_mirrorSymmOper(
         zone_axes,
