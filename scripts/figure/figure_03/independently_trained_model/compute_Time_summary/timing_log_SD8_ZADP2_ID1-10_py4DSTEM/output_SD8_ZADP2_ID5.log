@@ -1,0 +1,18 @@
+/home/kwang/anaconda3/envs/oriMapPaper-env/lib/python3.11/site-packages/py4DSTEM/process/diffraction/crystal.py:276: FutureWarning: get_structures is deprecated; use parse_structures in pymatgen.io.cif instead.
+The only difference is that primitive defaults to False in the new parse_structures method.So parse_structures(primitive=True) is equivalent to the old behavior of get_structures().
+  structure = parser.get_structures()[0]
+zone_axis_displacement 2
+Automatically detected point group m-3m,
+ using arguments: zone_axis_range = 
+[[0 1 1]
+ [1 1 1]], 
+ fiber_axis=None, fiber_angles=None.
+Orientation plan:   0%|          | 0/406 [00:00<?, ? zone axes/s]Orientation plan: 100%|██████████| 406/406 [00:00<00:00, 4615.18 zone axes/s]
+setting parameters and initialzing crystal object: 0.131410 seconds
+
+Reading PointListArray:   0%|          | 0/64 [00:00<?, ?PointList/s]Reading PointListArray: 100%|██████████| 64/64 [00:00<00:00, 15263.29PointList/s]
+loading Bragg disk list: 0.016479 seconds
+
+Matching Orientations:   0%|          | 0/64 [00:00<?, ? PointList/s]Matching Orientations:   9%|▉         | 6/64 [00:00<00:01, 54.59 PointList/s]Matching Orientations:  19%|█▉        | 12/64 [00:00<00:00, 54.61 PointList/s]Matching Orientations:  28%|██▊       | 18/64 [00:00<00:00, 54.80 PointList/s]Matching Orientations:  38%|███▊      | 24/64 [00:00<00:00, 54.89 PointList/s]Matching Orientations:  47%|████▋     | 30/64 [00:00<00:00, 55.00 PointList/s]Matching Orientations:  56%|█████▋    | 36/64 [00:00<00:00, 55.04 PointList/s]Matching Orientations:  66%|██████▌   | 42/64 [00:00<00:00, 55.01 PointList/s]Matching Orientations:  75%|███████▌  | 48/64 [00:00<00:00, 55.02 PointList/s]Matching Orientations:  84%|████████▍ | 54/64 [00:00<00:00, 54.97 PointList/s]Matching Orientations:  94%|█████████▍| 60/64 [00:01<00:00, 54.91 PointList/s]Matching Orientations: 100%|██████████| 64/64 [00:01<00:00, 54.91 PointList/s]
+finished orientationMapping: 1.165913 seconds
+

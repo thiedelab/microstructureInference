@@ -1,0 +1,27 @@
+/home/kwang/anaconda3/envs/oriMapPaper-env/lib/python3.11/site-packages/py4DSTEM/process/diffraction/crystal.py:276: FutureWarning: get_structures is deprecated; use parse_structures in pymatgen.io.cif instead.
+The only difference is that primitive defaults to False in the new parse_structures method.So parse_structures(primitive=True) is equivalent to the old behavior of get_structures().
+  structure = parser.get_structures()[0]
+py4DSTEM version:  0.14.8
+Automatically detected point group m-3m,
+ using arguments: zone_axis_range = 
+[[0 1 1]
+ [1 1 1]], 
+ fiber_axis=None, fiber_angles=None.
+Orientation plan:   0%|          | 0/406 [00:00<?, ? zone axes/s]Orientation plan: 100%|██████████| 406/406 [00:00<00:00, 4282.93 zone axes/s]
+Using device: cuda
+setting parameters and initialzing crystal object: 0.138507 seconds
+
+Reading PointListArray:   0%|          | 0/65536 [00:00<?, ?PointList/s]Reading PointListArray:   2%|▏         | 1560/65536 [00:00<00:04, 15596.93PointList/s]Reading PointListArray:   5%|▍         | 3124/65536 [00:00<00:03, 15619.88PointList/s]Reading PointListArray:   7%|▋         | 4690/65536 [00:00<00:03, 15634.22PointList/s]Reading PointListArray:  10%|▉         | 6261/65536 [00:00<00:03, 15663.09PointList/s]Reading PointListArray:  12%|█▏        | 7833/65536 [00:00<00:03, 15683.40PointList/s]Reading PointListArray:  14%|█▍        | 9405/65536 [00:00<00:03, 15694.21PointList/s]Reading PointListArray:  17%|█▋        | 10975/65536 [00:00<00:03, 15692.04PointList/s]Reading PointListArray:  19%|█▉        | 12545/65536 [00:00<00:04, 12002.75PointList/s]Reading PointListArray:  22%|██▏       | 14115/65536 [00:00<00:03, 12955.40PointList/s]Reading PointListArray:  24%|██▍       | 15691/65536 [00:01<00:03, 13708.45PointList/s]Reading PointListArray:  26%|██▋       | 17264/65536 [00:01<00:03, 14269.48PointList/s]Reading PointListArray:  29%|██▊       | 18837/65536 [00:01<00:03, 14682.14PointList/s]Reading PointListArray:  31%|███       | 20409/65536 [00:01<00:03, 14980.41PointList/s]Reading PointListArray:  34%|███▎      | 21980/65536 [00:01<00:02, 15193.28PointList/s]Reading PointListArray:  36%|███▌      | 23554/65536 [00:01<00:02, 15352.47PointList/s]Reading PointListArray:  38%|███▊      | 25127/65536 [00:01<00:02, 15461.98PointList/s]Reading PointListArray:  41%|████      | 26698/65536 [00:01<00:02, 15535.63PointList/s]Reading PointListArray:  43%|████▎     | 28269/65536 [00:01<00:02, 15585.48PointList/s]Reading PointListArray:  46%|████▌     | 29841/65536 [00:01<00:02, 15624.33PointList/s]Reading PointListArray:  48%|████▊     | 31416/65536 [00:02<00:02, 15659.41PointList/s]Reading PointListArray:  50%|█████     | 32986/65536 [00:02<00:02, 15670.37PointList/s]Reading PointListArray:  53%|█████▎    | 34557/65536 [00:02<00:01, 15681.84PointList/s]Reading PointListArray:  55%|█████▌    | 36127/65536 [00:02<00:01, 15684.18PointList/s]Reading PointListArray:  58%|█████▊    | 37698/65536 [00:02<00:01, 15690.57PointList/s]Reading PointListArray:  60%|█████▉    | 39268/65536 [00:02<00:01, 15666.76PointList/s]Reading PointListArray:  62%|██████▏   | 40836/65536 [00:02<00:01, 15652.40PointList/s]Reading PointListArray:  65%|██████▍   | 42402/65536 [00:02<00:01, 15650.17PointList/s]Reading PointListArray:  67%|██████▋   | 43970/65536 [00:02<00:01, 15658.39PointList/s]Reading PointListArray:  69%|██████▉   | 45543/65536 [00:02<00:01, 15673.66PointList/s]Reading PointListArray:  72%|███████▏  | 47116/65536 [00:03<00:01, 15689.34PointList/s]Reading PointListArray:  74%|███████▍  | 48687/65536 [00:03<00:01, 15693.17PointList/s]Reading PointListArray:  77%|███████▋  | 50258/65536 [00:03<00:00, 15696.05PointList/s]Reading PointListArray:  79%|███████▉  | 51829/65536 [00:03<00:00, 15698.74PointList/s]Reading PointListArray:  81%|████████▏ | 53400/65536 [00:03<00:00, 15699.46PointList/s]Reading PointListArray:  84%|████████▍ | 54974/65536 [00:03<00:00, 15709.35PointList/s]Reading PointListArray:  86%|████████▋ | 56547/65536 [00:03<00:00, 15714.06PointList/s]Reading PointListArray:  89%|████████▊ | 58119/65536 [00:03<00:00, 15715.19PointList/s]Reading PointListArray:  91%|█████████ | 59691/65536 [00:03<00:00, 15701.22PointList/s]Reading PointListArray:  93%|█████████▎| 61262/65536 [00:03<00:00, 15702.70PointList/s]Reading PointListArray:  96%|█████████▌| 62833/65536 [00:04<00:00, 15696.13PointList/s]Reading PointListArray:  98%|█████████▊| 64406/65536 [00:04<00:00, 15704.45PointList/s]Reading PointListArray: 100%|██████████| 65536/65536 [00:04<00:00, 15342.47PointList/s]
+loading Bragg disk list: 4.581802 seconds
+
+change coordinate and make torch tensor: 2.730551 seconds
+
+intensity_bin_centers.shape[0]
+ 64 
+
+Time for loading models and setting dataloader: 0.123569 seconds
+
+Time for predicting orientations time: 3.526628 seconds
+
+making orientation map: 1.702069 seconds
+

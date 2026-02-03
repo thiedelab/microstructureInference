@@ -1,0 +1,27 @@
+/home/kwang/anaconda3/envs/oriMapPaper-env/lib/python3.11/site-packages/py4DSTEM/process/diffraction/crystal.py:276: FutureWarning: get_structures is deprecated; use parse_structures in pymatgen.io.cif instead.
+The only difference is that primitive defaults to False in the new parse_structures method.So parse_structures(primitive=True) is equivalent to the old behavior of get_structures().
+  structure = parser.get_structures()[0]
+py4DSTEM version:  0.14.8
+Automatically detected point group m-3m,
+ using arguments: zone_axis_range = 
+[[0 1 1]
+ [1 1 1]], 
+ fiber_axis=None, fiber_angles=None.
+Orientation plan:   0%|          | 0/406 [00:00<?, ? zone axes/s]Orientation plan: 100%|██████████| 406/406 [00:00<00:00, 4279.88 zone axes/s]
+Using device: cpu
+setting parameters and initialzing crystal object: 0.140274 seconds
+
+Reading PointListArray:   0%|          | 0/16384 [00:00<?, ?PointList/s]Reading PointListArray:  10%|▉         | 1572/16384 [00:00<00:00, 15716.83PointList/s]Reading PointListArray:  19%|█▉        | 3155/16384 [00:00<00:00, 15779.60PointList/s]Reading PointListArray:  29%|██▉       | 4736/16384 [00:00<00:00, 15789.39PointList/s]Reading PointListArray:  39%|███▊      | 6323/16384 [00:00<00:00, 15818.01PointList/s]Reading PointListArray:  48%|████▊     | 7909/16384 [00:00<00:00, 15830.35PointList/s]Reading PointListArray:  58%|█████▊    | 9497/16384 [00:00<00:00, 15845.79PointList/s]Reading PointListArray:  68%|██████▊   | 11087/16384 [00:00<00:00, 15861.91PointList/s]Reading PointListArray:  77%|███████▋  | 12678/16384 [00:00<00:00, 15876.17PointList/s]Reading PointListArray:  87%|████████▋ | 14266/16384 [00:00<00:00, 15871.14PointList/s]Reading PointListArray:  97%|█████████▋| 15855/16384 [00:01<00:00, 15875.38PointList/s]Reading PointListArray: 100%|██████████| 16384/16384 [00:01<00:00, 15846.44PointList/s]
+loading Bragg disk list: 1.170032 seconds
+
+change coordinate and make torch tensor: 0.734042 seconds
+
+intensity_bin_centers.shape[0]
+ 64 
+
+Time for loading models and setting dataloader: 0.046836 seconds
+
+Time for predicting orientations time: 19.234703 seconds
+
+making orientation map: 0.437346 seconds
+

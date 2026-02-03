@@ -2,7 +2,7 @@
 
 A package designed to train a model for identifying structural attributes (crystallographic orientations and phases) of a single crystal from 4-dimensional scanning transmission electron microscopy (4D-STEM) diffraction patterns.
 
-![Transformer model](./images/transformer_model.png)
+![Transformer model](./scripts/figure/figure_01/transformer_model.png)
 
 We have made modifications and additions to the original py4DSTEM codebase to support simulations of dynamic diffraction from SO3 proper orientation matrix and to support calculation of sparse correlation value between two Bragg vector point list.
 
