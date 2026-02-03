@@ -519,7 +519,7 @@ def plot_orientation_zones(
     # x = r * np.sin(theta)
     # y = r * np.cos(theta)
 
-    warnings.filterwarnings("ignore", module=r"matplotlib\..*")
+    warnings.filterwarnings("ignore", module="matplotlib\..*")
     line_params = {"linewidth": 2, "alpha": 0.1, "c": "k"}
     for phi in np.arange(0, 180, 5):
         ax.plot3D(
@@ -927,18 +927,33 @@ def plot_diffraction_pattern(
             bragg_peaks_compare.data["qx"],
             s=marker_size_compare,
             marker="o",
-            facecolor=[0.0, 0.7, 1.0],
+            facecolor= "#D9EFFF",
+            edgecolor = "k", # KWANG
+            linewidths = 0.8
+            # facecolor=[0.0, 0.7, 1.0], # KWANG
         )
         ax.scatter(
             bragg_peaks.data["qy"],
             bragg_peaks.data["qx"],
             s=marker_size,
             marker="+",
-            facecolor="k",
+            linewidths = 1.6,
+            # facecolor="#ff0000",
+            facecolor="#2164EB",
+            # facecolor="#F55B27",
         )
+        # ax.scatter(
+        #     bragg_peaks.data["qy"],
+        #     bragg_peaks.data["qx"],
+        #     s=marker_size,
+        #    marker="+",
+        #     facecolor="k",
+        #  )
 
-    ax.set_xlabel("$q_y$ [Å$^{-1}$]")
-    ax.set_ylabel("$q_x$ [Å$^{-1}$]")
+    ax.set_xlabel("$k_y$ [Å$^{-1}$]", fontsize = 24)
+    ax.set_ylabel("$k_x$ [Å$^{-1}$]", fontsize = 24)
+    ax.tick_params(axis='x', direction='out', length=14, width=0.8, color='k', labelsize=22) #KWANG
+    ax.tick_params(axis='y', direction='out', length=14, width=0.8, color='k', labelsize=22) #KWANG
 
     if plot_range_kx_ky is not None:
         plot_range_kx_ky = np.array(plot_range_kx_ky)
@@ -955,7 +970,9 @@ def plot_diffraction_pattern(
 
     ax.invert_yaxis()
     ax.set_box_aspect(1)
-    ax.xaxis.tick_top()
+    # ax.xaxis.tick_top() # COMMENTED OUT BY KWANG
+    ax.set_yticks([-2, 0, 2]) # KWANG
+    ax.set_xticks([-2, 0, 2]) # KWANG
 
     # Labels for all peaks
     if add_labels is True:
@@ -965,7 +982,7 @@ def plot_diffraction_pattern(
             "family": "sans-serif",
             "fontweight": "normal",
             "color": "r",
-            "size": 10,
+            "size": 12,
         }
 
         def overline(x):
@@ -989,10 +1006,199 @@ def plot_diffraction_pattern(
     ax.set_aspect("equal")
 
     if input_fig_handle is None:
-        plt.show()
+        a = 1 # KWANG
+        # plt.show()
 
     if returnfig:
         return fig, ax
+    
+
+def plot_diffraction_pattern_compare_approaches(
+    bragg_peaks: PointList,
+    bragg_peaks_compare: PointList = None,
+    marker_color = None,
+    scale_markers: float = 500,
+    scale_markers_compare: Optional[float] = None,
+    power_markers: float = 1,
+    plot_range_kx_ky: Optional[Union[list, tuple, np.ndarray]] = None,
+    add_labels: bool = True,
+    shift_labels: float = 0.08,
+    shift_marker: float = 0.005,
+    min_marker_size: float = 1e-6,
+    max_marker_size: float = 1000,
+    figsize: Union[list, tuple, np.ndarray] = (12, 6),
+    returnfig: bool = False,
+    input_fig_handle=None,
+    isTransformerPrediction: bool = False,
+):
+    """
+    2D scatter plot of the Bragg peaks
+
+    Args:
+        bragg_peaks (PointList):        numpy array containing ('qx', 'qy', 'intensity', 'h', 'k', 'l')
+        bragg_peaks_compare(PointList): numpy array containing ('qx', 'qy', 'intensity')
+        scale_markers (float):          size scaling for markers
+        scale_markers_compare (float):  size scaling for markers of comparison
+        power_markers (float):          power law scaling for marks (default is 1, i.e. amplitude)
+        plot_range_kx_ky (float):       2 element numpy vector giving the plot range
+        add_labels (bool):              flag to add hkl labels to peaks
+        min_marker_size (float):        minimum marker size for the comparison peaks
+        max_marker_size (float):        maximum marker size for the comparison peaks
+        figsize (2 element float):      size scaling of figure axes
+        returnfig (bool):               set to True to return figure and axes handles
+        input_fig_handle (fig,ax)       Tuple containing a figure / axes handle for the plot.
+    """
+
+    # 2D plotting
+    if input_fig_handle is None:
+        # fig = plt.figure(figsize=figsize)
+        # ax = fig.add_subplot()
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+    else:
+        fig = input_fig_handle[0]
+        ax_parent = input_fig_handle[1]
+        ax = ax_parent[0]
+
+    if power_markers == 2:
+        marker_size = scale_markers * bragg_peaks.data["intensity"]
+    else:
+        marker_size = scale_markers * (
+            bragg_peaks.data["intensity"] ** (power_markers / 2)
+        )
+
+    # Apply marker size limits to primary plot
+    marker_size = np.clip(marker_size, min_marker_size, max_marker_size)
+
+    if bragg_peaks_compare is None:
+        if marker_color == None:
+            ax.scatter(
+            bragg_peaks.data["qy"], bragg_peaks.data["qx"], s=marker_size, facecolor="k"
+        )
+        else:
+            ax.scatter(
+            bragg_peaks.data["qy"], bragg_peaks.data["qx"], s=marker_size, facecolor=marker_color
+        )
+    else:
+        if scale_markers_compare is None:
+            scale_markers_compare = scale_markers
+
+        if power_markers == 2:
+            marker_size_compare = np.clip(
+                scale_markers_compare * bragg_peaks_compare.data["intensity"],
+                min_marker_size,
+                max_marker_size,
+            )
+        else:
+            marker_size_compare = np.clip(
+                scale_markers_compare
+                * (bragg_peaks_compare.data["intensity"] ** (power_markers / 2)),
+                min_marker_size,
+                max_marker_size,
+            )
+
+        ax.scatter(
+            bragg_peaks_compare.data["qy"],
+            bragg_peaks_compare.data["qx"],
+            s=marker_size_compare,
+            marker="o",
+            # facecolor= "#D9EFFF",
+            facecolor= "#E3F3FF",
+            edgecolor = "k", # KWANG
+            linewidths = 0.8
+            # facecolor=[0.0, 0.7, 1.0], # KWANG
+        )
+            
+        if isTransformerPrediction:
+            ax.scatter(
+                bragg_peaks.data["qy"],
+                bragg_peaks.data["qx"],
+                s=marker_size,
+                marker="1",
+                linewidths = 1.6,
+                facecolor="#E35322",
+            )
+        
+        else:
+            ax.scatter(
+                bragg_peaks.data["qy"],
+                bragg_peaks.data["qx"],
+                s=marker_size,
+                marker="+",
+                linewidths = 1.6,
+                # facecolor="#ff0000",
+                facecolor="#2164EB",
+                # facecolor="#F55B27",
+            )
+        # ax.scatter(
+        #     bragg_peaks.data["qy"],
+        #     bragg_peaks.data["qx"],
+        #     s=marker_size,
+        #    marker="+",
+        #     facecolor="k",
+        #  )
+
+    ax.set_xlabel("$k_y$ [Å$^{-1}$]", fontsize = 24)
+    ax.set_ylabel("$k_x$ [Å$^{-1}$]", fontsize = 24)
+    ax.tick_params(axis='x', direction='out', length=14, width=0.8, color='k', labelsize=22) #KWANG
+    ax.tick_params(axis='y', direction='out', length=14, width=0.8, color='k', labelsize=22) #KWANG
+
+    if plot_range_kx_ky is not None:
+        plot_range_kx_ky = np.array(plot_range_kx_ky)
+        if plot_range_kx_ky.ndim == 0:
+            plot_range_kx_ky = np.array((plot_range_kx_ky, plot_range_kx_ky))
+        ax.set_xlim((-plot_range_kx_ky[0], plot_range_kx_ky[0]))
+        ax.set_ylim((-plot_range_kx_ky[1], plot_range_kx_ky[1]))
+    else:
+        k_range = 1.05 * np.sqrt(
+            np.max(bragg_peaks.data["qx"] ** 2 + bragg_peaks.data["qy"] ** 2)
+        )
+        ax.set_xlim((-k_range, k_range))
+        ax.set_ylim((-k_range, k_range))
+
+    ax.invert_yaxis()
+    ax.set_box_aspect(1)
+    # ax.xaxis.tick_top() # COMMENTED OUT BY KWANG
+    ax.set_yticks([-2, 0, 2]) # KWANG
+    ax.set_xticks([-2, 0, 2]) # KWANG
+
+    # Labels for all peaks
+    if add_labels is True:
+        text_params = {
+            "ha": "center",
+            "va": "center",
+            "family": "sans-serif",
+            "fontweight": "normal",
+            "color": "r",
+            "size": 12,
+        }
+
+        def overline(x):
+            return str(x) if x >= 0 else (r"\overline{" + str(np.abs(x)) + "}")
+
+        for a0 in range(bragg_peaks.data.shape[0]):
+            h = bragg_peaks.data["h"][a0]
+            k = bragg_peaks.data["k"][a0]
+            l = bragg_peaks.data["l"][a0]
+
+            ax.text(
+                bragg_peaks.data["qy"][a0],
+                bragg_peaks.data["qx"][a0]
+                - shift_labels
+                - shift_marker * np.sqrt(marker_size[a0]),
+                "$" + overline(h) + overline(k) + overline(l) + "$",
+                **text_params,
+            )
+
+    # Force plot to have 1:1 aspect ratio
+    ax.set_aspect("equal")
+
+    if input_fig_handle is None:
+        a = 1 # KWANG
+        # plt.show()
+
+    if returnfig:
+        return fig, ax
+
 
 
 def plot_orientation_maps(
@@ -1097,6 +1303,9 @@ def plot_orientation_maps(
     dir_in_plane = np.deg2rad(dir_in_plane_degrees)
     ct = np.cos(dir_in_plane)
     st = np.sin(dir_in_plane)
+    # print("") ## KWANG DELTE
+    # print("orientation_map.num_x", orientation_map.num_x) ## KWANG DELTE
+    # print("orientation_map.num_y", orientation_map.num_y) ## KWANG DELTE
     basis_x = np.zeros((orientation_map.num_x, orientation_map.num_y, 3))
     basis_y = np.zeros((orientation_map.num_x, orientation_map.num_y, 3))
     basis_z = np.zeros((orientation_map.num_x, orientation_map.num_y, 3))
@@ -1107,11 +1316,28 @@ def plot_orientation_maps(
     A = np.linalg.inv(self.orientation_zone_axis_range).T
 
     # Correlation masking
+    # print("orientation_map.corr.shape", orientation_map.corr.shape, "\n") # KWANG DELETE
+    # print("orientation_map.corr[:, :, orientation_ind]\n", orientation_map.corr[:, :, orientation_ind], "\n") # KWANG DELETE
+    # print("np.min(orientation_map.corr[:, :, orientation_ind])", np.min(orientation_map.corr[:, :, orientation_ind]))
+    # print("np.max(orientation_map.corr[:, :, orientation_ind])", np.max(orientation_map.corr[:, :, orientation_ind]))
+    # print("np.mean(orientation_map.corr[:, :, orientation_ind])", np.mean(orientation_map.corr[:, :, orientation_ind]))
+    
     corr = orientation_map.corr[:, :, orientation_ind]
+    
+    # print("np.sort(corr)\n", np.sort(corr), "\n") #KWANG DELTE
+    
     if corr_normalize:
         corr = corr / np.mean(corr)
     mask = (corr - corr_range[0]) / (corr_range[1] - corr_range[0])
     mask = np.clip(mask, 0, 1)
+
+    # print("mask\n", mask) # KWANG DELETE
+    # print("np.where(mask > 0)\n", np.where(mask > 0), "\n") ## KWANG DELTE
+    # print("np.min(mask)", np.min(mask)) # KWANG
+    # print("np.max(mask)", np.max(mask)) # KWANG
+    # print("np.sort(mask)\n", np.sort(mask), "\n") # KWANG
+    # print("mask[0,16], mask[0,18], mask[99,95]", mask[0,16], mask[0,18], mask[99,95], "\n") ## KWANG DELTE
+    # print("mask[:, :, None]\n", mask[:, :, None], "\n") ## KWANG DELETE
 
     # Generate images
     for rx, ry in tqdmnd(
@@ -1122,6 +1348,8 @@ def plot_orientation_maps(
         disable=not progress_bar,
     ):
         if self.pymatgen_available:
+            # print("orientation_map.family[rx, ry]\n",orientation_map.family[rx, ry]) # KWANG DELETE note that orientation_ind is fixed
+            # print("orientation_map.family[rx, ry, orientation_ind, :, 0]\n", orientation_map.family[rx, ry, orientation_ind, :, 0], "\n") ## KWANG DELETE
             basis_x[rx, ry, :] = (
                 A @ orientation_map.family[rx, ry, orientation_ind, :, 0]
             )
@@ -1134,16 +1362,23 @@ def plot_orientation_maps(
                 A @ orientation_map.family[rx, ry, orientation_ind, :, 2]
             )
         else:
+            # print("orientation_map.matrix[rx, ry, orientation_ind, :, 2]\n", orientation_map.matrix[rx, ry, orientation_ind, :, 2], "\n") # KWAN GDELET
             basis_z[rx, ry, :] = (
                 A @ orientation_map.matrix[rx, ry, orientation_ind, :, 2]
             )
     basis_x = np.clip(basis_x, 0, 1)
     basis_z = np.clip(basis_z, 0, 1)
+    
+    # print("basis_x.shape", basis_x.shape) ## KWANG DELTE
+    # print("basis_x\n", basis_x, "\n") ## KWANG DELTE
+    
 
     # Convert to RGB images
     basis_x_max = np.max(basis_x, axis=2)
     sub = basis_x_max > 0
     basis_x_scale = basis_x * mask[:, :, None]
+    # print("basis_x_scale\n", basis_x_scale, "\n") ## KWANG DELTE
+    # print("basis_x_scale.shape", basis_x_scale.shape)
     for a0 in range(3):
         basis_x_scale[:, :, a0][sub] /= basis_x_max[sub]
         basis_x_scale[:, :, a0][np.logical_not(sub)] = 0
@@ -1289,10 +1524,14 @@ def plot_orientation_maps(
             horizontalalignment="center",
         )
     ax_z.imshow(rgb_z)
-    ax_z.set_xticks(np.arange(0,128,2))
-    ax_z.set_yticks(np.arange(0,128,2))
-    ax_x.set_xticks(np.arange(0,128,2))
-    ax_x.set_yticks(np.arange(0,128,2))
+    #ax_x.set_xticks(np.arange(0,149,50))
+    #ax_x.set_yticks(np.arange(0,251,50))
+    #ax_z.set_xticks(np.arange(0,149,50))
+    ax_z.set_yticks([])
+    ax_z.tick_params(axis='both', which='major', length=10, width = 0.8, labelsize=25)
+    ax_x.tick_params(axis='both', which='major', length=10, width = 0.8, labelsize=25)
+    # ax_x.set_xticks(np.arange(0,128,2))
+    # ax_x.set_yticks(np.arange(0,128,2))
     #ax_z.set_xlim([27.5, 30.5])
     #ax_z.set_ylim([64.5, 61.5])
     #ax_z.scatter(57, 38, s = 70, color = '#ffffff')
@@ -1488,6 +1727,15 @@ def plot_orientation_maps(
             ha=ha_2,
             **text_params,
         )
+        
+    scan_space_pixel_spacing_nm = 20.2 #[nm]
+    bar_length_nm = 400 #[nm]
+    bar_length_pixel = bar_length_nm / scan_space_pixel_spacing_nm
+    
+    scale_bar_y = 60
+    scale_bar_x_start = 10
+    scale_bar_x_end = scale_bar_x_start + bar_length_pixel
+    #ax_x.plot([scale_bar_x_start, scale_bar_x_end],[scale_bar_y, scale_bar_y], color = "white", lw=3, solid_capstyle="butt")
     #plt.xlim([10,20])
     plt.show()
 
@@ -1720,11 +1968,11 @@ def plot_fiber_orientation_maps(
             np.round(leg_size * 1.0),
         ]
         labels = [
-            str(np.round(self.orientation_fiber_angles[0] * 0.00)) + r"$\degree$",
-            str(np.round(self.orientation_fiber_angles[0] * 0.25)) + r"$\degree$",
-            str(np.round(self.orientation_fiber_angles[0] * 0.50)) + r"$\degree$",
-            str(np.round(self.orientation_fiber_angles[0] * 0.75)) + r"$\degree$",
-            str(np.round(self.orientation_fiber_angles[0] * 1.00)) + r"$\degree$",
+            str(np.round(self.orientation_fiber_angles[0] * 0.00)) + "$\degree$",
+            str(np.round(self.orientation_fiber_angles[0] * 0.25)) + "$\degree$",
+            str(np.round(self.orientation_fiber_angles[0] * 0.50)) + "$\degree$",
+            str(np.round(self.orientation_fiber_angles[0] * 0.75)) + "$\degree$",
+            str(np.round(self.orientation_fiber_angles[0] * 1.00)) + "$\degree$",
         ]
         ax_op_l.set_xticks(ticks)
         ax_op_l.set_xticklabels(labels)

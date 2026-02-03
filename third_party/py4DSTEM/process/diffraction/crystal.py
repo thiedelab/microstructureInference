@@ -22,12 +22,12 @@ class Crystal:
     # Various methods for the Crystal class are implemented in a separate file. This
     # import statement inside the class declaration imports them as methods of the class!
     # (see https://stackoverflow.com/a/47562412)
-    # Automated Crystal Orientation Mapping is implemented in crystal_ACOM.py
 
-    from py4DSTEM.process.diffraction.crystal_ACOM_kwang_custom import (
-        orientation_plan_customized,
-        match_single_pattern_customized,
-        )
+    # Automated Crystal Orientation Mapping is implemented in crystal_ACOM.py
+    # from py4DSTEM.process.diffraction.crystal_ACOM_kwang_custom import (
+    #     orientation_plan_customized,
+    #     match_single_pattern_customized,
+    #     )
     from py4DSTEM.process.diffraction.crystal_ACOM import (
         orientation_plan,
         match_orientations,

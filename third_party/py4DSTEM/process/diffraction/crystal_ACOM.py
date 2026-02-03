@@ -289,7 +289,7 @@ def orientation_plan(
     )
     self.orientation_zone_axis_steps = (
         np.round(step / self.orientation_refine_ratio) * self.orientation_refine_ratio
-    ).astype(np.integer)
+    ).astype(np.int64)
 
     if self.orientation_fiber and self.orientation_fiber_angles[0] == 0:
         self.orientation_num_zones = int(1)
@@ -324,7 +324,7 @@ def orientation_plan(
             (self.orientation_zone_axis_steps + 1)
             * (self.orientation_zone_axis_steps + 2)
             / 2
-        ).astype(np.integer)
+        ).astype(np.int64)
         self.orientation_vecs = np.zeros((self.orientation_num_zones, 3))
         self.orientation_vecs[0, :] = self.orientation_zone_axis_range[0, :]
         self.orientation_inds = np.zeros((self.orientation_num_zones, 3), dtype="int")
@@ -333,7 +333,7 @@ def orientation_plan(
         # or circular arc SLERP for fiber texture
         for a0 in np.arange(1, self.orientation_zone_axis_steps + 1):
             inds = np.arange(a0 * (a0 + 1) / 2, a0 * (a0 + 1) / 2 + a0 + 1).astype(
-                np.integer
+                np.int64
             )
 
             p0 = pv[a0, :]
@@ -571,7 +571,7 @@ def orientation_plan(
 
     # Solve for number of angular steps along in-plane rotation direction
     self.orientation_in_plane_steps = np.round(360 / angle_step_in_plane).astype(
-        np.integer
+        np.int64
     )
 
     # Calculate -z angles (Euler angle 3)
@@ -680,6 +680,8 @@ def orientation_plan(
         )
         self.orientation_rotation_matrices[a0, :, :] = m1z @ m2x @ m3z
         self.orientation_rotation_angles[a0, :] = [azim[a0], elev[a0], -azim[a0]]
+        
+    print("self.orientation_refine\n", self.orientation_refine, "\n") ## KWANG DELETE
 
     # Calculate reference arrays for all orientations
     k0 = np.array([0.0, 0.0, -1.0 / self.wavelength])
@@ -745,6 +747,10 @@ def orientation_plan(
             orientation_ref_norm = np.sqrt(np.sum(self.orientation_ref[a0, :, :] ** 2))
             if orientation_ref_norm > 0:
                 self.orientation_ref[a0, :, :] /= orientation_ref_norm
+        
+        # print("self.orientation_ref\n", self.orientation_ref, "\n")
+        # print("self.orientation_ref.shape", self.orientation_ref.shape, "\n")
+        # print("self.orientation_ref[0]\n", self.orientation_ref, "\n")
 
         # Maximum value
         self.orientation_ref_max = np.max(np.real(self.orientation_ref))
@@ -1096,7 +1102,10 @@ def match_single_pattern(
                     corr_full[mask_zero, :] = 0.0
 
         # Get maximum (non inverted) correlation value
+        # print("corr_full.shape\n", corr_full.shape, "\n") # KWANG DELETE.
         ind_phi = np.argmax(corr_full, axis=1)
+        # print("ind_phi\n", ind_phi, "\n")
+        # print("ind_phi.shape", ind_phi.shape, "\n")
 
         # Calculate orientation correlogram for inverse pattern (in-plane mirror)
         if inversion_symmetry:
@@ -1184,16 +1193,29 @@ def match_single_pattern(
 
             ind_phi_inv = np.argmax(corr_full_inv, axis=1)
             corr_inv = np.zeros(self.orientation_num_zones, dtype="bool")
+        
+        # print("np.max(corr_full_inv), np.min(corr_full_inv)", np.max(corr_full_inv), np.min(corr_full_inv)) ## KWANG DELETE
+        # print("corr_full_inv.shape", corr_full_inv.shape)
+        # print("(corr_full_inv < 1e-16).sum()", (corr_full_inv < 1e-16).sum())
+        # print("(corr_full_inv < 1e-16).sum() / (corr_full_inv.shape[0] * corr_full_inv.shape[1])", (corr_full_inv < 1e-16).sum() / (corr_full_inv.shape[0] * corr_full_inv.shape[1]))
+        # print("")
+        # print("np.max(corr_full), np.min(corr_full)", np.max(corr_full), np.min(corr_full)) ## KWANG DELETE
+        # print("corr_full.shape", corr_full.shape)
+        # print("(corr_full < 1e-16).sum()", (corr_full < 1e-16).sum())
+        # print("(corr_full < 1e-16).sum() / (corr_full.shape[0] * corr_full.shape[1])", (corr_full < 1e-16).sum() / (corr_full.shape[0] * corr_full.shape[1]))
+        # print("")
+        
 
         # Find best match for each zone axis
         corr_value[:] = 0
         for a0 in range(self.orientation_num_zones):
+            # print("######################a0")
             if (self.orientation_refine is False) or self.orientation_sieve[a0]:
                 # Correlation score
                 if inversion_symmetry:
                     if corr_full_inv[a0, ind_phi_inv[a0]] > corr_full[a0, ind_phi[a0]]:
                         corr_value[a0] = corr_full_inv[a0, ind_phi_inv[a0]]
-                        corr_inv[a0] = True
+                        corr_inv[a0] = True ## KWANG. Here if corr_full value of given zone axis a0 index is smaller than corr_full. 
                     else:
                         corr_value[a0] = corr_full[a0, ind_phi[a0]]
                 else:
@@ -1201,25 +1223,34 @@ def match_single_pattern(
 
                 # In-plane sub-pixel angular fit
                 if inversion_symmetry and corr_inv[a0]:
+                    # print("if inversion_symmetry and corr_inv[a0]") # KWANG DELETE
+                    # print("ind_phi_inv[a0]", ind_phi_inv[a0])
                     inds = np.mod(
                         ind_phi_inv[a0] + np.arange(-1, 2), self.orientation_gamma.size
                     ).astype("int")
+                    # print("inds", inds)
                     c = corr_full_inv[a0, inds]
+                    # print("c", c)
                     if np.max(c) > 0:
                         dc = (c[2] - c[0]) / (4 * c[1] - 2 * c[0] - 2 * c[2])
                         corr_in_plane_angle[a0] = (
                             self.orientation_gamma[ind_phi_inv[a0]] + dc * dphi
                         ) + np.pi
+                        # print("corr_in_plane_angle[a0]", corr_in_plane_angle[a0])
                 else:
+                    # print("if not inversion_symmetry and corr_inv[a0]") # KWANG DELETE
+                    # print("ind_phi[a0]", ind_phi[a0])
                     inds = np.mod(
                         ind_phi[a0] + np.arange(-1, 2), self.orientation_gamma.size
                     ).astype("int")
                     c = corr_full[a0, inds]
+                    # print("c", c)
                     if np.max(c) > 0:
                         dc = (c[2] - c[0]) / (4 * c[1] - 2 * c[0] - 2 * c[2])
                         corr_in_plane_angle[a0] = (
                             self.orientation_gamma[ind_phi[a0]] + dc * dphi
                         )
+                        # print("corr_in_plane_angle[a0]", corr_in_plane_angle[a0])
 
         # If needed, keep original polar image to recompute the correlations
         if (
@@ -1230,9 +1261,15 @@ def match_single_pattern(
         ):
             corr_value_keep = corr_value.copy()
             corr_in_plane_angle_keep = corr_in_plane_angle.copy()
+        
+        # print("corr_in_plane_angle_keep", corr_in_plane_angle_keep)
+        # print("corr_in_plane_angle", corr_in_plane_angle)
 
         # Determine the best fit orientation
         ind_best_fit = np.unravel_index(np.argmax(corr_value), corr_value.shape)[0]
+        
+        # print("before self.orientation_refine, corr_full.shape", corr_full.shape) ## KWANG DELETE
+        # print("before self.orientation_refine, corr_full_inv.shape", corr_full_inv.shape) ## KWANG DELETE
 
         ############################################################
         # If needed, perform fine step refinement of the zone axis #
@@ -1312,6 +1349,8 @@ def match_single_pattern(
                 ind_phi_inv = np.argmax(corr_full_inv, axis=1)
 
             # Determine best in-plane correlation
+            # print("self.orientation_refine==True, corr_full.shape", corr_full.shape) ## KWANG DELETE
+            # print("self.orientation_refine==True, corr_full_inv.shape", corr_full_inv.shape) ## KWANG DELETE
             for a0 in np.argwhere(mask_refine):
                 # Correlation score
                 if inversion_symmetry:
@@ -1349,6 +1388,8 @@ def match_single_pattern(
             ind_best_fit = np.unravel_index(
                 np.argmax(corr_value * mask_refine[None, :]), corr_value.shape
             )[0]
+            
+        ## KWANG GNETLY NOTE THAT CORRELATION SCORE IS ALREADY CALCULATED ABOVE NOT BELOW
 
         # Verify current match has a correlation > 0
         if corr_value[ind_best_fit] > 0:
@@ -1356,6 +1397,9 @@ def match_single_pattern(
             orientation_matrix = np.squeeze(
                 self.orientation_rotation_matrices[ind_best_fit, :, :]
             )
+            
+            # print("chimha orientation_matrix\n", orientation_matrix, "\n") ## KWANG
+            ## KWANG. Check where does ind_best_fit comes from
 
             # apply in-plane rotation, and inversion if needed
             if (
@@ -1374,7 +1418,8 @@ def match_single_pattern(
                 ]
             )
             orientation_matrix = orientation_matrix @ m3z
-            if inversion_symmetry and corr_inv[ind_best_fit]:
+            
+            if inversion_symmetry and corr_inv[ind_best_fit]:                     # KWANG NOTE HERE
                 # Rotate 180 degrees around x axis for projected x-mirroring operation
                 orientation_matrix[:, 1:] = -orientation_matrix[:, 1:]
 
