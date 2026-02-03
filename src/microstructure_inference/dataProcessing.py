@@ -522,8 +522,12 @@ def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment
         
         constraint_eq_matrix = sp.kron(sp.eye_array(POINTS_positions_only.shape[0]), np.ones((1, QUERYPOINTS_positions_only.shape[0]))).toarray()
         constraint_eq_val = np.ones(POINTS_positions_only.shape[0])
+
         
         res = linprog(reshaped_pairDist_based_on_positions, constraint_ub_matrix, constraint_ub_val, constraint_eq_matrix, constraint_eq_val, (0, 1))
+        if not res.success:
+            raise RuntimeError("Linear assignment failed: " + res.message)
+        
         indices_of_paired_BDs = np.where(res.x > assignment_tol)[0]
 
         row_idx, col_idx = get_row_col(indices_of_paired_BDs, pairDist_based_on_positions.shape[1])
@@ -531,8 +535,8 @@ def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment
         
         pairedDiskDist = pairedDiskDist.reshape(pairedDiskDist.shape[0])
 
-        cost = pairedDiskDist * (POINTS_intensity[row_idx] + QUERYPOINTS_intensity[col_idx]) * 0.5
-        final_assignment_cost = np.average(cost)
+        weights = (POINTS_intensity[row_idx] + QUERYPOINTS_intensity[col_idx]) * 0.5
+        final_assignment_cost = np.sum(pairedDiskDist * weights) / np.sum(weights)
 
     
     # In case the number of Bragg disks in set 1 and that in set 2 are the same.
@@ -558,6 +562,8 @@ def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment
         constraint_eq_val_stacked = np.hstack((constraint_eq_val_1, constraint_eq_val_2)).T
                 
         res = linprog(reshaped_pairDist_based_on_positions, None, None, constraint_eq_matrix_stacked, constraint_eq_val_stacked, (0, 1))
+        if not res.success:
+            raise RuntimeError("Linear assignment failed: " + res.message)
         
         indices_of_paired_BDs = np.where(res.x > assignment_tol)[0]
         row_idx, col_idx = get_row_col(indices_of_paired_BDs,  pairDist_based_on_positions.shape[1])
@@ -567,8 +573,8 @@ def assignment_cost_pairwise_distance(input_BD_set_1, input_BD_set_2, assignment
         
         pairedDiskDist = pairedDiskDist.reshape(pairedDiskDist.shape[0])
 
-        cost = pairedDiskDist * (POINTS_intensity[row_idx] + QUERYPOINTS_intensity[col_idx]) * 0.5
-        final_assignment_cost = np.average(cost)
+        weights = (POINTS_intensity[row_idx] + QUERYPOINTS_intensity[col_idx]) * 0.5
+        final_assignment_cost = np.sum(pairedDiskDist * weights) / np.sum(weights)
         
     return final_assignment_cost
 
