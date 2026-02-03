@@ -7,22 +7,22 @@ Created on Wed May 21 14:50:43 2025
 """
 import numpy as np
 import torch
-from dataAugmentation import  custom_transforms_for_Data_Aug
+from dataAugmentation import custom_transforms_for_Data_Aug
 from torch.utils.data import DataLoader
 import os
 import argparse
 #import torchinfo
 from torch.utils.data.sampler import SubsetRandomSampler
-from dataModules import DataSetPointGroup_rotation, digitized_bin_centers
+from dataModules import DataSetPointGroup_rotation_and_phase, digitized_bin_centers
 from transformerModel import ModelConfig, make_model
-from trainer_point_group_rotation_map import train, load_checkpoint
+from trainer_point_group_rotation_and_phase_map import train, load_checkpoint
 
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="information of scan space dimension and number of crystalline grains")
     parser.add_argument("--embed_dim", type = int, help="embedded dimension", default = int(384))
-    parser.add_argument("--max_sequence_length", type = int, help="maximum number of allowed tokens", default = int(76))
+    parser.add_argument("--max_sequence_length", type = int, help="maximum number of allowed tokens", default = int(106))
     parser.add_argument("--min_radial_distance", type = float, help="minimum raidus", default = float(0.45844))    
     parser.add_argument("--max_radial_distance", type = float, help="maximum raidus", default = float(2.99000))
     parser.add_argument("--min_braggIntensity", type = float, help="minimum intensity", default = float(0.001))    
@@ -30,8 +30,8 @@ def parse_args():
     parser.add_argument("--num_bins_radialDistance", type = int, help="number of discretized bins for radius dimension", default = int(256))
     parser.add_argument("--num_bins_polarAngle", type = int, help="number of discretized bins for polar angle dimension", default = int(360))
     parser.add_argument("--num_bins_braggintensity", type = int, help="number of discretized bins for intensity dimension", default = int(64))
-    parser.add_argument("--isMultitask", type = int, help="integer_indicating_multi_predictions", default = int(0))
-    parser.add_argument("--seed", type = int, help="random number seed for numpy and torch", default = int(6))
+    parser.add_argument("--isMultitask", type = int, help="integer_indicating_multi_predictions", default = int(1))
+    parser.add_argument("--seed", type = int, help="random number seed for numpy and torch", default = int(222))
     parser.add_argument("--PAD", type = int, help="integer indicating PAD token", default = int(0))
     
     parser.add_argument("--num_warmup_epochs", type = int, help="number of epochs for linear warm up learning rate scheduler", default = int(15))
@@ -39,11 +39,9 @@ def parse_args():
 
     parser.add_argument("--eta_intial", type = float, help="initial learning rate", default = float(0.00007))
     parser.add_argument("--eta_min", type = float, help="minimum learning rate in the last epoch", default = float(5e-7))
-    
     parser.add_argument("--initial_run",action="store_true",help="whether this training is the first training run")
     parser.add_argument("--printArg",action="store_true",help="print all arguments")
     parser.add_argument("--printModelInfo",action="store_true",help="print model architecture")
-
     return parser.parse_args()
 
 
@@ -58,15 +56,14 @@ def main():
     num_bins_braggintensity = args.num_bins_braggintensity
     
     embed_dim = args.embed_dim
-    max_sequence_length = args.max_sequence_length
+    max_sequence_length = int(args.max_sequence_length)
     
     min_radial_distance = args.min_radial_distance
     max_radial_distance = args.max_radial_distance
+    isMultitask = int(args.isMultitask)
     
     min_braggIntensity = args.min_braggIntensity
     max_braggIntensity = args.max_braggIntensity
-
-    isMultitask = int(args.isMultitask)
     
     seed = args.seed
     PAD = args.PAD
@@ -78,8 +75,6 @@ def main():
     
     eta_intial = args.eta_intial
     eta_min = args.eta_min
-
-    data_path = "/tmp/kwang/tempD6/"
     
     
     initial_run = args.initial_run
@@ -89,6 +84,7 @@ def main():
     np.random.seed(seed)
     
     model_path = os.getcwd() + "/"
+    file_path = "/tmp/kwang/tempM2/"
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("torch device", device, "\n")
@@ -110,17 +106,6 @@ def main():
                                                     num_bins_braggintensity,
                                                     max_braggIntensity,
     )
-    
-    # transforms = custom_transforms_for_Data_Aug_no_removal(
-    #                                                     num_bins_radialDistance, 
-    #                                                     num_bins_polarAngle, 
-    #                                                     num_bins_braggintensity,
-    #                                                     radial_bins,
-    #                                                     radial_bin_centers,
-    #                                                     angle_bins,
-    #                                                     angle_bin_centers,
-    #                                                     )
-    
     
     
     train_transforms = custom_transforms_for_Data_Aug(
@@ -151,9 +136,9 @@ def main():
     ############ Set dataset and dataloader that can be used as input of torch Dataset class.
     
     
+    kwang_dataset_train = DataSetPointGroup_rotation_and_phase(file_path + "two_phase_BD_stacked_train.npy", file_path + "two_phase_orient_original_stacked_train.npy", file_path + "two_phase_phaseLabel_stacked_train.npy", num_bins_polarAngle,  transform = train_transforms)
+    kwang_dataset_val = DataSetPointGroup_rotation_and_phase(file_path + "two_phase_BD_stacked_valid.npy", file_path + "two_phase_orient_original_stacked_valid.npy", file_path + "two_phase_phaseLabel_stacked_valid.npy", num_bins_polarAngle, transform = val_transforms)
     
-    kwang_dataset_train = DataSetPointGroup_rotation(data_path + "entire_Bradd_disks_padded_train.npy", data_dir + "orientation_original_labels_train.npy", num_bins_polarAngle,  transform = train_transforms)
-    kwang_dataset_val = DataSetPointGroup_rotation(data_path + "entire_Bradd_disks_padded_valid.npy", data_dir + "orientation_original_labels_valid.npy", num_bins_polarAngle, transform = val_transforms)
     
     train_indices = np.arange(len(kwang_dataset_train))
     np.random.shuffle(train_indices)
@@ -165,17 +150,18 @@ def main():
                             batch_size = 1024,
                             sampler = train_sampler,
                             # shuffle = True,
-                            num_workers = 16,
+                            num_workers = 12,
                             pin_memory=True,
                             persistent_workers=True,
                             prefetch_factor=2,
+    
                              )
     
     val_loader = DataLoader(
                             kwang_dataset_val,
                             batch_size = 1024,
                             shuffle = False,
-                            num_workers = 16,
+                            num_workers = 12,
                             pin_memory=True,
                             persistent_workers=True,
                             prefetch_factor=2,
@@ -210,20 +196,8 @@ def main():
     
     
     
-    linear_warmup = torch.optim.lr_scheduler.LinearLR(
-                                            optimizer,
-                                            start_factor = 1/num_warmup_epochs,
-                                            end_factor = 1.0,
-                                            total_iters = num_warmup_epochs - 1,
-                                            last_epoch = -1,
-    )
-    
-    cos_decay = torch.optim.lr_scheduler.CosineAnnealingLR(
-                                            optimizer = optimizer,
-                                            T_max = cos_decay_epoch,
-                                            eta_min = eta_min,
-    )
-
+    linear_warmup = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1 / num_warmup_epochs, end_factor=1.0, total_iters = num_warmup_epochs - 1, last_epoch=-1)
+    cos_decay     = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max= cos_decay_epoch, eta_min=eta_min)
     
     if initial_run == True:
         start_epoch = 0
@@ -232,7 +206,7 @@ def main():
         model, optimizer, linear_warmup, cos_decay, start_epoch = load_checkpoint(model, optimizer, linear_warmup, cos_decay, checkpoint_path, device)
 
     
-    output_path = "/tmp/kwang/singR06/"
+    output_path = "/tmp/kwang/mulR02/"
     
     train_error, valid_error = train(model, train_loader, val_loader, num_epochs, optimizer, linear_warmup, cos_decay, num_warmup_epochs, cos_decay_epoch,  device, output_path, PAD = PAD, start_epoch = start_epoch)
     
