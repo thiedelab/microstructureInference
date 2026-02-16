@@ -62,69 +62,28 @@ import py4DSTEM
 
 ### Descriptions for training neural networks models
 
-###### please make sure to make bash files in scripts directory executable by chmod +x 
-
-###### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels. The "./scripts/data_generate_01_synthetic_training_data" directory contains scripts for generating synthetic training and validation data (see below)
-
-###### To start training, please run the following bash file
-```bash
-./scripts/train_transformer/TRAIN_transformer_for_mapping_4DSTEM_DPs_to_orientation.sh
-```
-
-###### Once trained, you can use the model to map experimental diffraction patterns to orientations of crystals. The "./scripts/data_analyses_02_check_performance_of_orientationPrediction" directory contains scripts for the mapping (see below)
-
----
-
-### Descriptions of scripts for data generation and data analysis
-
-###### please make sure to make bash files in scripts directory executable by chmod +x 
-
 #### How to generate synthetic training data for training neural network models
+
+##### To train the model, you would need synthetic training and validation data, which are simulated diffraction pattern (table of Bragg disks) with orientation labels. 
+
+##### The "./scripts/training_and_validation_data_generation" directory contains scripts for generating synthetic training and validation data
 
 ###### step 01. We first sample thickness and orientations from given crystal unit cell.
 ###### step 02. From the sampled orientations and thickness, we simulate dynamic diffraction patterns and save them in table format.
 ###### step 03. For each diffraction pattern, we further digitize Bragg disk positions and intensities (still in table format)
 ###### step 04. Finally, we merge all data and split it into training data and validation data
-```bash
-./scripts/data_generate_01_synthetic_training_data/DATA_GENERATE_01_generate_synthetic_training_data.sh
-```
 
-#### How to generate synthetic 4D-STEM data of Cu and Cu<sub>2</sub>O crystals
-###### step 01. We first sample background signals from experimental 4D-STEM data and make synthetic scanspace filled with crystal grains.
-###### step 02. Thereafter, we randomly sample orienations
-###### step 03. Using orientations, crystal unit cells of Cu and Cu<sub>2</sub>O, and sampled background signals, we generated synthetic diffraction patterns and assign it to each 2D scan position.
-```bash
-./scripts/data_generate_02_synthetic_4DSTEM_data/DATA_GENERATE_02_generate_synthetic_4DSTEM_data.sh
-```
+#### Model training
 
-#### Analysis 1. How to map a diffraction pattern of experimental 4D-STEM data to a table of detected Bragg disks
+###### Once training/validation datasets are prepared you can train model.
 
-###### In this proejct, we identify orienation of single crystal from a diffraction pattern by using a list of Bragg disks in the diffraction pattern; we map each diffraction pattern to a list (or table) of Bragg disks.
-###### The map is obtained by detecting Bragg disks in a diffraction pattern using correlative template matching
-###### The correlation template is obtained by sampling direct beam from diffraction pattern and averaging them
-###### We gently note that we perform difference of gaussian preprocessing prior to Bragg disk detection to remove backgrounds.
-###### For this step, you would need raw experimental 4D-STEM data.
-```bash
-./scripts/data_analyses_01_mapping_diffractionPattern_to_BraggDiskTable/DATA_ANALYSES_01_map_diffPatt_to_BraggDiskTable.sh
-```
-
-#### Analysis 2. How to predict orientations from experimental 4D-STEM diffraction patterns
-
-###### For this step, please note that you need "h5" file generated Analysis 1. step
+##### The "./scripts/train_transformer/orientation_prediction" directory contains scripts for training a model for orientation prediction
+##### The "./scripts/train_transformer/joint_phase_and_orientation_prediction" directory contains scripts for training a model for joint prediction of orientations and phases
 
 
-```bash
-./scripts/data_analyses_02_check_performance_of_orientationPrediction/DATA_ANALYSES_02_predict_orientations.sh
-```
+#### Analysis codes
 
-#### Analysis 3. How to measure correlation between experimental Bragg disks and simulated Bragg disks from predicted orientation
-
-###### For this step, please note that you need "pkl", "h5", "npy" files generated from Analysis 2. & Analysis 1. steps.
-###### For this step, you would also need raw experimental 4D-STEM data used in Analysis 1.
-
-```bash
-./scripts/data_analyses_03_measure_correlation_between_experiments_and_predictions/DATA_ANALYSES_03_measure_correlation_between_prediction_and_experimental_data.sh
-```
+###### Analaysis codes are included in "./scripts/figure". This directory also includes codes for generating figure sets.
 
 ---
 
