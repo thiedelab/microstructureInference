@@ -7,15 +7,15 @@ Created on Wed May 21 14:50:43 2025
 """
 import numpy as np
 import torch
-from dataAugmentation import  custom_transforms_for_Data_Aug
+from microstructure_inference.dataAugmentation import  custom_transforms_for_Data_Aug
 from torch.utils.data import DataLoader
 import os
 import argparse
 #import torchinfo
 from torch.utils.data.sampler import SubsetRandomSampler
-from dataModules import DataSetPointGroup_rotation, digitized_bin_centers
-from transformerModel import ModelConfig, make_model
-from trainer_point_group_rotation_map import train, load_checkpoint
+from microstructure_inference.dataModules import DataSetPointGroup_rotation, digitized_bin_centers
+from microstructure_inference.transformerModel import ModelConfig, make_model
+from microstructure_inference.trainer_point_group_rotation_map import train, load_checkpoint
 
 
 
