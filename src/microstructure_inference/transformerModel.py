@@ -148,7 +148,7 @@ class directioPositionEmbedding_I(nn.Module):
 class EmbedLayer(nn.Module):
     def __init__(self, embed_dim, angle_bin_centers, intensity_bin_centers, num_bins_radialDistance, device, dropout=0.0):
         super().__init__()
-        print("intensity_bin_centers.shape[0]\n", intensity_bin_centers.shape[0], "\n")
+        # print("intensity_bin_centers.shape[0]\n", intensity_bin_centers.shape[0], "\n")
         self.R_embedding = absolutePositionEmbedding(num_bins_radialDistance, embed_dim)                      # 1D Sinusoidal Positional Embedding
         self.A_embedding = directioPositionEmbedding_A(angle_bin_centers, embed_dim, device)                            # directional positional embedding
         # self.I_embedding = directioPositionEmbedding_I(intensity_bin_centers, embed_dim, device)                            # directional positional embedding
